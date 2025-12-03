@@ -661,36 +661,541 @@
                 targetYear: typeSelect.value === 'oneoff' ? viewYear : null,
                 targetMonth: typeSelect.value === 'oneoff' ? viewMonth : null,
                 targetWeekday: typeSelect.value === 'weekly' ? selectedDateObj.getDay() : null,
-                targetDayOfMonth: typeSelect.value === 'monthly' ? selectedDateObj.getDate() : null,
-                isImportant: importantCheck.checked 
-            };
-            taskDefinitions.push(newTask); saveData(); 
-            input.value = ""; importantCheck.checked = false; renderCalendar(); renderTasks();
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GemTask - Mobile Optimized</title>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- デザイン設定 (共通) --- */
+        :root {
+            --bg-color: #FDFBF7;
+            --text-color: #5D5550;
+            --accent-color: #D4C4B5;
+            --highlight: #A8D8B9;
+            --pending-dot: #F4A261;
+            --delete-btn: #E07A5F;
+            --google-color: #4285F4;
+            --important-color: #E07A5F; 
+            --star-inactive: #ccc;
+            --star-active: #E07A5F;
+            --card-bg: #FFFFFF;
+            --danger-color: #D32F2F;
+            
+            --tag-oneoff: #89C9B8;
+            --tag-daily: #F2A0A1;
+            --tag-weekly: #F6D365;
+            --tag-monthly: #A0C1B8;
+            --tag-google: #AECBFA;
         }
-        function toggleTask(id) {
-            const dateStr = getDateString(selectedDateObj);
-            const existingIndex = completionLog.findIndex(log => log.taskId === id && log.dateStr === dateStr);
-            if (existingIndex !== -1) completionLog.splice(existingIndex, 1);
-            else completionLog.push({ taskId: id, dateStr: dateStr });
-            saveData(); renderTasks(); renderCalendar(); 
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
         }
-        function toggleImportance(id) {
-            const task = taskDefinitions.find(t => t.id === id);
-            if (task) { task.isImportant = !task.isImportant; saveData(); renderTasks(); renderCalendar(); }
+
+        .app-container {
+            width: 95%;
+            max-width: 1000px;
+            height: 90vh;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            overflow: hidden;
+            position: relative; 
         }
-        function deleteTask(id) {
-            if(confirm("削除しますか？")) {
-                taskDefinitions = taskDefinitions.filter(t => t.id !== id);
-                completionLog = completionLog.filter(log => log.taskId !== id);
-                saveData(); renderTasks(); renderCalendar();
+
+        .sidebar {
+            width: 35%;
+            background-color: #F8F4E6;
+            padding: 30px;
+            border-right: 1px solid var(--accent-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            touch-action: pan-y; 
+            overflow-x: hidden;
+        }
+
+        .calendar-header {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.6);
+            padding: 8px 12px;
+            border-radius: 15px;
+            user-select: none;
+        }
+        
+        .nav-btn {
+            background: none; border: none; cursor: pointer; font-size: 1.2em;
+            color: var(--text-color); width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .nav-btn:hover { background-color: var(--accent-color); color: white; }
+
+        .today-btn {
+            font-size: 0.7em;
+            background-color: var(--text-color);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 0 5px;
+        }
+        .today-btn:hover { opacity: 0.8; }
+
+        .weekday-row {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            text-align: center; font-size: 0.8em; color: #888; margin-bottom: 5px;
+        }
+
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center;
+            min-height: 250px;
+            user-select: none;
+            transform: translateX(0);
+        }
+
+        @keyframes slideInRight { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInLeft { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeInZoom { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .anim-next { animation: slideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .anim-prev { animation: slideInLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .anim-fade { animation: fadeInZoom 0.3s ease-out; }
+
+        .day {
+            aspect-ratio: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; border-radius: 50%;
+            cursor: pointer; font-size: 0.9em; position: relative; border: 2px solid transparent;
+            touch-action: manipulation;
+        }
+        .day:hover { background-color: rgba(212, 196, 181, 0.3); }
+        .day.active { border-color: var(--text-color); font-weight: bold; }
+        .day.empty { cursor: default; pointer-events: none; }
+        
+        .day.has-pending::after {
+            content: ''; width: 6px; height: 6px; background-color: var(--pending-dot);
+            border-radius: 50%; position: absolute; bottom: 4px;
+        }
+        .day.has-important::before {
+            content: '★'; position: absolute; top: -2px; right: -2px; font-size: 0.8em;
+            color: var(--important-color); line-height: 1;
+        }
+        .day.perfect { background-color: var(--highlight) !important; color: white; }
+        .day.perfect::after { display: none; }
+        .day.perfect.has-important::before { color: #fff; }
+
+        .main-content {
+            width: 65%; padding: 40px 50px; overflow-y: auto;
+            position: relative; display: flex; flex-direction: column;
+        }
+
+        .date-header {
+            font-size: 2em; font-weight: bold; margin-bottom: 5px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .progress-display {
+            font-size: 0.5em; background-color: #F0EBE0; padding: 5px 15px;
+            border-radius: 20px; color: var(--text-color); font-weight: normal; white-space: nowrap;
+        }
+
+        .divider { border-bottom: 2px dashed var(--accent-color); margin-bottom: 20px; }
+
+        /* セクションタイトルにクラスを追加して制御しやすく */
+        .section-title {
+            color: #8C8480; margin-bottom: 10px; font-weight: bold;
+        }
+
+        .input-group {
+            display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+        }
+
+        .todo-input {
+            flex-grow: 1; padding: 12px; border: 1px solid var(--accent-color); border-radius: 10px;
+            font-family: inherit; outline: none; background-color: #FAFAFA; min-width: 200px;
+            font-size: 16px; 
+        }
+
+        .type-select {
+            padding: 10px; border: 1px solid var(--accent-color); border-radius: 10px;
+            font-family: inherit; background-color: #fff; color: var(--text-color); cursor: pointer;
+            font-size: 14px;
+        }
+
+        .important-label {
+            display: flex; align-items: center; gap: 5px; color: var(--important-color);
+            font-weight: bold; cursor: pointer; font-size: 0.9em; background: #fff;
+            padding: 8px 12px; border-radius: 10px; border: 1px solid #FFE4E4;
+        }
+        .important-label input { transform: scale(1.3); accent-color: var(--important-color); margin: 0; }
+
+        .add-btn {
+            background:var(--accent-color); color:#fff; border:none; border-radius:10px;
+            padding:12px 25px; cursor:pointer; font-weight:bold;
+        }
+
+        .todo-list { list-style: none; padding: 0; margin-bottom: 30px; }
+
+        .todo-item {
+            display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee;
+            animation: fadeIn 0.3s ease; padding-left: 5px; min-height: 40px;
+        }
+        .todo-item.is-important {
+            background-color: #FFF5F5; border-left: 4px solid var(--important-color); border-radius: 0 5px 5px 0;
+        }
+        .todo-item input[type="checkbox"] {
+            margin-right: 15px; transform: scale(1.3); accent-color: var(--highlight);
+            cursor: pointer; flex-shrink: 0; width: 20px; height: 20px;
+        }
+
+        .todo-content { flex-grow: 1; display: flex; align-items: center; justify-content: space-between; }
+        .todo-item.is-important .todo-content span { font-weight: bold; color: #C06050; }
+
+        .action-buttons { display: flex; align-items: center; gap: 10px; }
+
+        .delete-btn, .star-btn {
+            background: none; border: none; cursor: pointer; font-size: 1.3em;
+            padding: 5px 10px; transition: 0.2s; line-height: 1;
+        }
+        .delete-btn:hover { color: var(--delete-btn); }
+        .star-btn.active { color: var(--star-active); }
+        .star-btn.inactive { color: var(--star-inactive); }
+
+        .badge {
+            font-size: 0.75em; padding: 4px 10px; border-radius: 12px; color: white;
+            margin-left: 5px; font-weight: bold; white-space: nowrap;
+        }
+        .badge-oneoff { background-color: var(--tag-oneoff); }
+        .badge-daily  { background-color: var(--tag-daily); }
+        .badge-weekly { background-color: var(--tag-weekly); }
+        .badge-monthly{ background-color: var(--tag-monthly); }
+        .badge-google { background-color: var(--tag-google); color: #333; }
+
+        .journal-section { margin-top: auto; }
+        .journal-title { color: #8C8480; font-weight: bold; margin-bottom: 10px; }
+        .journal-area {
+            width: 100%; height: 120px; padding: 15px; border: 1px solid var(--accent-color);
+            background-color: #FDFBF7; border-radius: 10px; resize: none; font-family: inherit;
+            line-height: 1.6; box-sizing: border-box; outline: none; font-size: 16px;
+        }
+
+        .data-controls {
+            margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--accent-color);
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+        }
+        
+        .btn-control {
+            font-size: 0.85em; padding: 10px 15px; background-color: #fff; border: 1px solid var(--accent-color);
+            border-radius: 20px; cursor: pointer; color: var(--text-color); transition: 0.2s;
+            flex-grow: 1; text-align: center; min-width: 80px;
+        }
+        .btn-control:hover { background-color: var(--accent-color); color: white; }
+        .btn-google { border-color: var(--google-color); color: var(--google-color); font-weight: bold; }
+        .btn-google:hover { background-color: var(--google-color); color: white; }
+        .btn-danger { border-color: var(--danger-color); color: var(--danger-color); font-weight: bold; }
+        .btn-danger:hover { background-color: var(--danger-color); color: white; }
+
+        /* ★★★ スマホレイアウト設定 ★★★ */
+        @media (max-width: 768px) {
+            body {
+                height: auto; min-height: 100vh; display: block; background-color: var(--card-bg);
+                padding: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
             }
+            .app-container {
+                width: 100%; max-width: none; height: auto; min-height: 100vh; flex-direction: column;
+                border-radius: 0; box-shadow: none; overflow: visible;
+            }
+            .sidebar {
+                width: 100%; border-right: none; border-bottom: 2px solid var(--accent-color); padding: 20px;
+                box-sizing: border-box; height: auto; overflow: visible; background-color: #F8F4E6; z-index: 2;
+            }
+            .day { font-size: 1em; aspect-ratio: 1; }
+            .calendar-grid { gap: 8px; }
+            .main-content {
+                width: 100%; padding: 20px; box-sizing: border-box; height: auto; overflow: visible; background-color: #FFFFFF; z-index: 1;
+                /* ★ Flexboxで順序制御を有効化 */
+                display: flex; flex-direction: column;
+            }
+
+            /* --- 並び順の入れ替え設定 (Order) --- */
+            .date-header { order: 1; }
+            .divider { order: 2; }
+            
+            /* 見出し */
+            .section-title { order: 3; }
+            
+            /* タスクリストを上に持ってくる */
+            .todo-list { order: 4; margin-bottom: 20px; }
+            
+            /* 入力欄を下に下げる */
+            .input-group { order: 5; margin-bottom: 30px; border-top: 1px dashed #eee; padding-top: 20px; }
+            
+            /* 日記は一番下 */
+            .journal-section { order: 6; }
+
+            /* その他のスマホ調整 */
+            .date-header { font-size: 1.5em; margin-top: 10px; }
+            .todo-input { width: 100%; margin-bottom: 10px; }
+            .add-btn { width: 100%; margin-top: 10px; }
+            .input-group { flex-direction: column; align-items: stretch; }
+            .type-select, .important-label { width: 100%; box-sizing: border-box; justify-content: center; margin-bottom: 10px;}
+            .data-controls { padding-bottom: 40px; }
         }
-        function handleDiaryInput() {
-            const text = document.getElementById('journalInput').value;
-            const dateStr = getDateString(selectedDateObj);
-            diaryEntries[dateStr] = text;
+    </style>
+</head>
+<body>
+    <script>
+        window.onerror = function(message) { console.error(message); };
+    </script>
+
+    <div class="app-container">
+        <aside class="sidebar" id="swipeArea">
+            <div class="calendar-header">
+                <button class="nav-btn" onclick="changeMonth(-1)">&#10094;</button>
+                <div style="display:flex; align-items:center;">
+                    <span id="monthDisplay">Loading...</span>
+                    <button class="today-btn" onclick="resetToToday()">Today</button>
+                </div>
+                <button class="nav-btn" onclick="changeMonth(1)">&#10095;</button>
+            </div>
+            <div class="weekday-row">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            
+            <div style="margin-top:20px; font-size:0.8rem; color:#888; text-align:center; line-height: 1.6;">
+                <span style="color:var(--highlight)">●</span> Perfect! <br>
+                <span style="color:var(--pending-dot)">●</span> Todoあり / <span style="color:var(--important-color)">★</span> 重要
+            </div>
+            
+            <div class="data-controls">
+                <button class="btn-control btn-google" onclick="document.getElementById('icalInput').click()">📅 Google読込</button>
+                <input type="file" id="icalInput" style="display:none" onchange="importIcal(this)" accept=".ics">
+
+                <button class="btn-control" onclick="exportData()">📤 保存</button>
+                <button class="btn-control" onclick="document.getElementById('fileInput').click()">📥 読込</button>
+                <input type="file" id="fileInput" style="display:none" onchange="importData(this)" accept=".json">
+                
+                <button class="btn-control btn-danger" onclick="resetApp()">⚠️ 全削除</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="date-header">
+                <span id="headerDateDisplay">Select a Date</span>
+                <span class="progress-display" id="progressDisplay">0%</span>
+            </div>
+            <div class="divider"></div>
+
+            <div class="section-title">🌿 タスクリスト</div>
+            
+            <div class="input-group">
+                <input type="text" class="todo-input" id="taskInput" placeholder="新しいタスク...">
+                <div style="display:flex; gap:10px; width:100%;">
+                    <select id="taskType" class="type-select" style="flex:1">
+                        <option value="oneoff">📅 単発</option>
+                        <option value="daily">🔁 毎日</option>
+                        <option value="weekly">📅 毎週</option>
+                        <option value="monthly">🌙 毎月</option>
+                    </select>
+                    <label class="important-label" style="flex:1">
+                        <input type="checkbox" id="importantCheck"> ★ 重要
+                    </label>
+                </div>
+                <button class="add-btn" onclick="handleAddTask()">追加</button>
+            </div>
+
+            <ul class="todo-list" id="todoList"></ul>
+
+            <div class="journal-section">
+                <div class="journal-title">📝 今日のひとこと日記</div>
+                <textarea class="journal-area" id="journalInput" placeholder="今日はどんな1日だった？" oninput="handleDiaryInput()"></textarea>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        /* JSロジックは v2.2 と同じ */
+        let taskDefinitions = []; let completionLog = []; let diaryEntries = {}; 
+        const today = new Date();
+        let viewYear = today.getFullYear(); let viewMonth = today.getMonth() + 1; 
+        let selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        function loadData() {
+            try {
+                const savedDefs = localStorage.getItem('gemTask_definitions');
+                const savedLogs = localStorage.getItem('gemTask_logs');
+                const savedDiary = localStorage.getItem('gemTask_diary');
+                if (savedDefs) taskDefinitions = JSON.parse(savedDefs);
+                if (savedLogs) completionLog = JSON.parse(savedLogs);
+                if (savedDiary) diaryEntries = JSON.parse(savedDiary);
+                if (!savedDefs && !savedLogs && !savedDiary) initDefaultData();
+            } catch (e) { initDefaultData(); }
+        }
+        function initDefaultData() {
+            taskDefinitions = []; completionLog = []; diaryEntries = {};
+            taskDefinitions.push({ id: 1, text: "GemTaskへようこそ", type: "oneoff", targetDate: today.getDate(), targetYear: today.getFullYear(), targetMonth: today.getMonth()+1, isImportant: true });
             saveData();
         }
+        function saveData() {
+            try {
+                localStorage.setItem('gemTask_definitions', JSON.stringify(taskDefinitions));
+                localStorage.setItem('gemTask_logs', JSON.stringify(completionLog));
+                localStorage.setItem('gemTask_diary', JSON.stringify(diaryEntries));
+            } catch (e) {}
+        }
+        const swipeArea = document.getElementById('swipeArea');
+        let touchStartX = 0; let touchEndX = 0;
+        swipeArea.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+        swipeArea.addEventListener('touchend', function(e) { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, {passive: true});
+        function handleSwipe() { if (Math.abs(touchStartX - touchEndX) > 50) { if (touchStartX - touchEndX > 0) changeMonth(1); else changeMonth(-1); } }
+        function resetToToday() { viewYear = today.getFullYear(); viewMonth = today.getMonth() + 1; selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate()); renderCalendar('anim-fade'); updateHeader(); renderTasks(); }
+        function resetApp() { if(confirm("【警告】データを全削除しますか？")) { localStorage.removeItem('gemTask_definitions'); localStorage.removeItem('gemTask_logs'); localStorage.removeItem('gemTask_diary'); initDefaultData(); resetToToday(); alert("初期化しました🌱"); } }
+        function importIcal(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result; const events = parseIcal(content);
+                    if (events.length > 0) {
+                        let count = 0;
+                        events.forEach(ev => {
+                            const exists = taskDefinitions.some(t => t.text === ev.title && t.targetDate === ev.day && t.type === 'google' && t.targetYear === ev.year && t.targetMonth === ev.month);
+                            if (!exists) { taskDefinitions.push({ id: Date.now() + Math.random(), text: ev.title, type: "google", targetDate: ev.day, targetYear: ev.year, targetMonth: ev.month, targetWeekday: null, targetDayOfMonth: null, isImportant: false }); count++; }
+                        });
+                        saveData(); renderCalendar('anim-fade'); renderTasks(); alert(`${count}件読み込みました📅`);
+                    } else { alert("予定なし💦"); }
+                } catch(e) { alert("読込エラー"); }
+            };
+            reader.readAsText(file); input.value = '';
+        }
+        function parseIcal(icalData) {
+            const events = []; const lines = icalData.split(/\r\n|\n|\r/); let inEvent = false; let currentEvent = {};
+            lines.forEach(line => {
+                if (line.startsWith('BEGIN:VEVENT')) { inEvent = true; currentEvent = {}; }
+                else if (line.startsWith('END:VEVENT')) { inEvent = false; if (currentEvent.summary && currentEvent.dtstart) { const dateStr = currentEvent.dtstart; if (dateStr.length >= 8) { events.push({ title: currentEvent.summary, year: parseInt(dateStr.substring(0, 4)), month: parseInt(dateStr.substring(4, 6)), day: parseInt(dateStr.substring(6, 8)) }); } } }
+                else if (inEvent) { if (line.startsWith('SUMMARY:')) currentEvent.summary = line.substring(8); else if (line.startsWith('DTSTART')) { const parts = line.split(':'); if (parts.length > 1) currentEvent.dtstart = parts[1]; } }
+            });
+            return events;
+        }
+        function exportData() {
+            const data = { definitions: taskDefinitions, logs: completionLog, diary: diaryEntries };
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `gemtask_backup_${getDateString(selectedDateObj)}.json`; a.click(); URL.revokeObjectURL(url);
+        }
+        function importData(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.definitions) taskDefinitions = data.definitions;
+                    if(data.logs) completionLog = data.logs;
+                    if(data.diary) diaryEntries = data.diary;
+                    saveData(); resetToToday(); alert("復元しました✨");
+                } catch (err) { alert("読込エラー"); }
+            };
+            reader.readAsText(file); input.value = '';
+        }
+        window.onload = () => { loadData(); renderCalendar('anim-fade'); updateHeader(); renderTasks(); };
+        function getDateString(dateObj) { const y = dateObj.getFullYear(); const m = dateObj.getMonth() + 1; const d = dateObj.getDate(); return `${y}-${m}-${d}`; }
+        function changeMonth(offset) { viewMonth += offset; if (viewMonth > 12) { viewMonth = 1; viewYear++; } else if (viewMonth < 1) { viewMonth = 12; viewYear--; } selectedDateObj = new Date(viewYear, viewMonth - 1, 1); const animClass = offset > 0 ? 'anim-next' : 'anim-prev'; renderCalendar(animClass); updateHeader(); renderTasks(); }
+        function getTasksForDate(day) {
+            const targetDateObj = new Date(viewYear, viewMonth - 1, day); const weekday = targetDateObj.getDay();
+            return taskDefinitions.filter(task => {
+                if (task.type === 'daily') return true;
+                if (task.type === 'weekly') return task.targetWeekday === weekday;
+                if (task.type === 'monthly') return task.targetDayOfMonth === day;
+                if (task.type === 'google' || task.type === 'oneoff') { const tYear = task.targetYear || viewYear; const tMonth = task.targetMonth || viewMonth; return task.targetDate === day && tYear === viewYear && tMonth === viewMonth; }
+                return false;
+            });
+        }
+        function renderCalendar(animationClass = '') {
+            const grid = document.getElementById('calendarGrid');
+            grid.className = 'calendar-grid'; void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
+            const monthDisplay = document.getElementById('monthDisplay');
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            monthDisplay.textContent = `${monthNames[viewMonth - 1]} ${viewYear}`;
+            grid.innerHTML = "";
+            const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay(); const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+            for (let i = 0; i < firstDay; i++) { const emptyCell = document.createElement('div'); emptyCell.className = 'day empty'; grid.appendChild(emptyCell); }
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayEl = document.createElement('div'); dayEl.className = 'day'; dayEl.textContent = i; dayEl.dataset.day = i;
+                const tasks = getTasksForDate(i);
+                if (tasks.length > 0) {
+                    const dateStr = `${viewYear}-${viewMonth}-${i}`;
+                    const completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length;
+                    const hasImportant = tasks.some(t => t.isImportant);
+                    if (completedCount === tasks.length) dayEl.classList.add('perfect'); else dayEl.classList.add('has-pending');
+                    if (hasImportant) dayEl.classList.add('has-important');
+                }
+                if(i === selectedDateObj.getDate() && viewMonth === (selectedDateObj.getMonth() + 1) && viewYear === selectedDateObj.getFullYear()) dayEl.classList.add('active');
+                dayEl.onclick = () => selectDate(i); grid.appendChild(dayEl);
+            }
+        }
+        function selectDate(day) { selectedDateObj = new Date(viewYear, viewMonth - 1, day); renderCalendar(); updateHeader(); renderTasks(); }
+        function updateHeader() { const dateStr = getDateString(selectedDateObj); const dayOfWeekStr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][selectedDateObj.getDay()]; document.getElementById('headerDateDisplay').textContent = `${viewMonth}/${selectedDateObj.getDate()} ${dayOfWeekStr}`; document.getElementById('journalInput').value = diaryEntries[dateStr] || ""; }
+        function renderTasks() {
+            const list = document.getElementById('todoList'); const progressDisplay = document.getElementById('progressDisplay'); list.innerHTML = "";
+            const day = selectedDateObj.getDate(); const dateStr = getDateString(selectedDateObj); const tasks = getTasksForDate(day);
+            let completedCount = 0;
+            if (tasks.length === 0) { progressDisplay.textContent = "No Tasks"; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "#aaa"; }
+            else {
+                completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length;
+                const percentage = Math.round((completedCount / tasks.length) * 100);
+                if (percentage === 100) { progressDisplay.textContent = `100% Perfect! 🎉`; progressDisplay.style.backgroundColor = "var(--highlight)"; progressDisplay.style.color = "white"; }
+                else { progressDisplay.textContent = `達成率: ${percentage}% (${completedCount}/${tasks.length})`; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "var(--text-color)"; }
+            }
+            tasks.forEach(task => {
+                const li = document.createElement('li'); li.className = `todo-item ${task.isImportant ? 'is-important' : ''}`;
+                const isCompleted = completionLog.some(log => log.taskId === task.id && log.dateStr === dateStr);
+                let badgeHtml = "", badgeText = "";
+                if (task.type === 'daily') { badgeHtml = "badge-daily"; badgeText = "毎日"; } else if (task.type === 'weekly') { badgeHtml = "badge-weekly"; badgeText = "毎週"; } else if (task.type === 'monthly') { badgeHtml = "badge-monthly"; badgeText = "毎月"; } else if (task.type === 'google') { badgeHtml = "badge-google"; badgeText = "Google"; } else { badgeHtml = "badge-oneoff"; badgeText = "単発"; }
+                const starClass = task.isImportant ? 'active' : 'inactive'; const starIcon = task.isImportant ? '★' : '☆';
+                li.innerHTML = `
+                    <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                    <div class="todo-content">
+                        <span>${task.text}</span>
+                        <div class="action-buttons"><span class="badge ${badgeHtml}">${badgeText}</span><button class="star-btn ${starClass}" onclick="toggleImportance(${task.id})">${starIcon}</button><button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button></div>
+                    </div>`;
+                list.appendChild(li);
+            });
+        }
+        function handleAddTask() {
+            const input = document.getElementById('taskInput'); const typeSelect = document.getElementById('taskType'); const importantCheck = document.getElementById('importantCheck');
+            const text = input.value.trim(); if (!text) return;
+            const newTask = { id: Date.now(), text: text, type: typeSelect.value, targetDate: typeSelect.value === 'oneoff' ? selectedDateObj.getDate() : null, targetYear: typeSelect.value === 'oneoff' ? viewYear : null, targetMonth: typeSelect.value === 'oneoff' ? viewMonth : null, targetWeekday: typeSelect.value === 'weekly' ? selectedDateObj.getDay() : null, targetDayOfMonth: typeSelect.value === 'monthly' ? selectedDateObj.getDate() : null, isImportant: importantCheck.checked };
+            taskDefinitions.push(newTask); saveData(); input.value = ""; importantCheck.checked = false; renderCalendar(); renderTasks();
+        }
+        function toggleTask(id) {
+            const dateStr = getDateString(selectedDateObj); const existingIndex = completionLog.findIndex(log => log.taskId === id && log.dateStr === dateStr);
+            if (existingIndex !== -1) completionLog.splice(existingIndex, 1); else completionLog.push({ taskId: id, dateStr: dateStr });
+            saveData(); renderTasks(); renderCalendar(); 
+        }
+        function toggleImportance(id) { const task = taskDefinitions.find(t => t.id === id); if (task) { task.isImportant = !task.isImportant; saveData(); renderTasks(); renderCalendar(); } }
+        function deleteTask(id) { if(confirm("削除しますか？")) { taskDefinitions = taskDefinitions.filter(t => t.id !== id); completionLog = completionLog.filter(log => log.taskId !== id); saveData(); renderTasks(); renderCalendar(); } }
+        function handleDiaryInput() { const text = document.getElementById('journalInput').value; const dateStr = getDateString(selectedDateObj); diaryEntries[dateStr] = text; saveData(); }
     </script>
 </body>
 </html>
