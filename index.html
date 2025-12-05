@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GemTask v2.5</title>
+    <title>GemTask - Time Machine</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
@@ -21,6 +21,8 @@
             --star-active: #E07A5F;
             --card-bg: #FFFFFF;
             --danger-color: #D32F2F;
+            --search-highlight: #FFEB3B;
+            --search-marker: #FF4081;
             
             --tag-oneoff: #89C9B8;
             --tag-daily: #F2A0A1;
@@ -29,10 +31,7 @@
             --tag-google: #AECBFA;
         }
 
-        /* ★ 全要素のボックスサイズ計算を統一（ズレ防止の基本） */
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { box-sizing: border-box; }
 
         body {
             font-family: 'M PLUS Rounded 1c', sans-serif;
@@ -47,220 +46,151 @@
         }
 
         .app-container {
-            width: 95%;
-            max-width: 1000px;
-            height: 90vh;
-            background-color: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            display: flex;
-            overflow: hidden;
-            position: relative; 
+            width: 95%; max-width: 1000px; height: 90vh;
+            background-color: var(--card-bg); border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: flex;
+            overflow: hidden; position: relative; 
         }
 
         .sidebar {
-            width: 35%;
-            background-color: #F8F4E6;
-            padding: 30px;
-            border-right: 1px solid var(--accent-color);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            touch-action: pan-y; 
-            overflow-x: hidden;
+            width: 35%; background-color: #F8F4E6; padding: 30px;
+            border-right: 1px solid var(--accent-color); display: flex; flex-direction: column;
+            overflow-y: auto; touch-action: pan-y; overflow-x: hidden;
         }
 
-        .calendar-header {
-            font-size: 1.1em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255,255,255,0.6);
-            padding: 8px 12px;
-            border-radius: 15px;
-            user-select: none;
+        /* --- 検索エリア --- */
+        .search-box { margin-bottom: 10px; position: relative; }
+        .search-input {
+            width: 100%; padding: 10px 35px 10px 15px; border: 2px solid var(--accent-color);
+            border-radius: 20px; font-family: inherit; outline: none; transition: 0.3s;
         }
-        
+        .search-input:focus { border-color: var(--text-color); background-color: #fff; }
+        .search-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #aaa; pointer-events: none; }
+        .search-result-msg { font-size: 0.75em; color: var(--search-marker); text-align: center; margin-bottom: 5px; min-height: 1.2em; font-weight: bold; }
+
+        /* --- カレンダーヘッダー --- */
+        .calendar-header {
+            font-size: 1.1em; font-weight: bold; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.6); padding: 8px 12px; border-radius: 15px; user-select: none;
+        }
         .nav-btn {
             background: none; border: none; cursor: pointer; font-size: 1.2em;
             color: var(--text-color); width: 30px; height: 30px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
         }
         .nav-btn:hover { background-color: var(--accent-color); color: white; }
+        
+        /* ★ 年月表示部分をボタン化 */
+        #monthDisplay {
+            cursor: pointer; padding: 5px 10px; border-radius: 10px; transition: 0.2s;
+        }
+        #monthDisplay:hover { background-color: rgba(255,255,255,0.8); color: var(--accent-color); }
 
         .today-btn {
-            font-size: 0.7em;
-            background-color: var(--text-color);
-            color: white;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-            margin: 0 5px;
+            font-size: 0.7em; background-color: var(--text-color); color: white; border: none;
+            padding: 4px 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-left: 5px;
         }
         .today-btn:hover { opacity: 0.8; }
 
-        /* ★ 修正: カレンダーグリッド（曜日も日付もここに入れる） */
+        /* --- グリッドシステム (月・年共通) --- */
         .calendar-grid {
-            display: grid; 
-            grid-template-columns: repeat(7, 1fr); 
-            gap: 4px; /* 隙間を少し狭めて安全マージン確保 */
-            text-align: center;
-            min-height: 250px;
-            user-select: none;
-            transform: translateX(0);
-            width: 100%; /* 親要素いっぱいに */
+            display: grid; gap: 4px; text-align: center; min-height: 250px;
+            user-select: none; width: 100%; transition: opacity 0.2s;
         }
 
-        /* 曜日ヘッダー用スタイル（グリッド内の要素として定義） */
-        .weekday {
-            font-size: 0.8em;
-            color: #888;
-            padding-bottom: 5px;
-            font-weight: bold;
+        /* 月表示モードのグリッド (7列) */
+        .grid-month-view { grid-template-columns: repeat(7, 1fr); }
+        
+        /* 年表示モードのグリッド (3列) */
+        .grid-year-view { 
+            grid-template-columns: repeat(3, 1fr); 
+            align-content: start; 
+            gap: 10px; 
+            padding-top: 20px;
         }
 
-        /* アニメーション定義 */
-        @keyframes slideInRight { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes slideInLeft { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeInZoom { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .weekday { font-size: 0.8em; color: #888; padding-bottom: 5px; font-weight: bold; }
 
-        .anim-next { animation: slideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        .anim-prev { animation: slideInLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        .anim-fade { animation: fadeInZoom 0.3s ease-out; }
-
+        /* --- 日付セル (月表示用) --- */
         .day {
             aspect-ratio: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: center; border-radius: 50%;
-            cursor: pointer; font-size: 0.9em; position: relative; 
-            border: 2px solid transparent; /* 枠線の太さ分も計算に含む */
+            cursor: pointer; font-size: 0.9em; position: relative; border: 2px solid transparent;
             touch-action: manipulation;
         }
         .day:hover { background-color: rgba(212, 196, 181, 0.3); }
-        .day.active { border-color: var(--text-color); font-weight: bold; }
+        .day.active { border-color: var(--text-color); font-weight: bold; background-color: rgba(93, 85, 80, 0.1); }
         .day.empty { cursor: default; pointer-events: none; }
-        
-        .day.has-pending::after {
-            content: ''; width: 5px; height: 5px; background-color: var(--pending-dot);
-            border-radius: 50%; position: absolute; bottom: 3px;
-        }
-        .day.has-important::before {
-            content: '★'; position: absolute; top: -3px; right: -3px; font-size: 0.8em;
-            color: var(--important-color); line-height: 1;
-        }
+        .day.has-pending::after { content: ''; width: 5px; height: 5px; background-color: var(--pending-dot); border-radius: 50%; position: absolute; bottom: 3px; }
+        .day.has-important::before { content: '★'; position: absolute; top: -3px; right: -3px; font-size: 0.8em; color: var(--important-color); line-height: 1; }
         .day.perfect { background-color: var(--highlight) !important; color: white; }
-        .day.perfect::after { display: none; }
-        .day.perfect.has-important::before { color: #fff; }
+        .day.perfect.search-hit { background-color: var(--search-marker) !important; color: white !important; border: 2px solid white !important; }
+        .day.search-hit { border: 2px solid var(--search-marker) !important; color: var(--search-marker); font-weight: bold; background-color: #FFF0F5; }
 
-        /* --- 以下、メインコンテンツ等のスタイル（変更なし） --- */
-        .main-content {
-            width: 65%; padding: 40px 50px; overflow-y: auto;
-            position: relative; display: flex; flex-direction: column;
+        /* --- 月セル (年表示用) --- */
+        .month-cell {
+            aspect-ratio: 1.5; /* 横長 */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 10px; cursor: pointer; border: 1px solid var(--accent-color);
+            background-color: #fff; transition: 0.2s; font-weight: bold; color: var(--text-color);
+            position: relative;
+        }
+        .month-cell:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .month-cell.current-month { background-color: var(--text-color); color: white; border-color: var(--text-color); }
+        
+        /* 年表示での検索ヒット */
+        .month-cell.has-search-hit {
+            border: 2px solid var(--search-marker);
+            background-color: #FFF0F5;
+            color: var(--search-marker);
+        }
+        .month-cell.has-search-hit::after {
+            content: attr(data-hit-count); /* 件数を表示 */
+            position: absolute; bottom: 5px; right: 8px;
+            font-size: 0.7em; background: var(--search-marker); color: white;
+            padding: 2px 6px; border-radius: 10px;
         }
 
-        .date-header {
-            font-size: 2em; font-weight: bold; margin-bottom: 5px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        /* アニメーション */
+        @keyframes fadeInZoom { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .anim-fade { animation: fadeInZoom 0.3s ease-out; }
+        mark { background-color: var(--search-highlight); color: inherit; padding: 0 2px; border-radius: 2px; }
 
-        .progress-display {
-            font-size: 0.5em; background-color: #F0EBE0; padding: 5px 15px;
-            border-radius: 20px; color: var(--text-color); font-weight: normal; white-space: nowrap;
-        }
-
+        /* メインコンテンツ (変更なし) */
+        .main-content { width: 65%; padding: 40px 50px; overflow-y: auto; position: relative; display: flex; flex-direction: column; }
+        .date-header { font-size: 2em; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .progress-display { font-size: 0.5em; background-color: #F0EBE0; padding: 5px 15px; border-radius: 20px; color: var(--text-color); font-weight: normal; white-space: nowrap; }
         .divider { border-bottom: 2px dashed var(--accent-color); margin-bottom: 20px; }
-
-        .section-title {
-            color: #8C8480; margin-bottom: 10px; font-weight: bold;
-        }
-
-        .input-group {
-            display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
-        }
-
-        .todo-input {
-            flex-grow: 1; padding: 12px; border: 1px solid var(--accent-color); border-radius: 10px;
-            font-family: inherit; outline: none; background-color: #FAFAFA; min-width: 200px;
-            font-size: 16px; 
-        }
-
-        .type-select {
-            padding: 10px; border: 1px solid var(--accent-color); border-radius: 10px;
-            font-family: inherit; background-color: #fff; color: var(--text-color); cursor: pointer;
-            font-size: 14px;
-        }
-
-        .important-label {
-            display: flex; align-items: center; gap: 5px; color: var(--important-color);
-            font-weight: bold; cursor: pointer; font-size: 0.9em; background: #fff;
-            padding: 8px 12px; border-radius: 10px; border: 1px solid #FFE4E4;
-        }
+        .section-title { color: #8C8480; margin-bottom: 10px; font-weight: bold; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .todo-input { flex-grow: 1; padding: 12px; border: 1px solid var(--accent-color); border-radius: 10px; font-family: inherit; outline: none; background-color: #FAFAFA; min-width: 200px; font-size: 16px; }
+        .type-select { padding: 10px; border: 1px solid var(--accent-color); border-radius: 10px; font-family: inherit; background-color: #fff; color: var(--text-color); cursor: pointer; font-size: 14px; }
+        .important-label { display: flex; align-items: center; gap: 5px; color: var(--important-color); font-weight: bold; cursor: pointer; font-size: 0.9em; background: #fff; padding: 8px 12px; border-radius: 10px; border: 1px solid #FFE4E4; }
         .important-label input { transform: scale(1.3); accent-color: var(--important-color); margin: 0; }
-
-        .add-btn {
-            background:var(--accent-color); color:#fff; border:none; border-radius:10px;
-            padding:12px 25px; cursor:pointer; font-weight:bold;
-        }
-
+        .add-btn { background:var(--accent-color); color:#fff; border:none; border-radius:10px; padding:12px 25px; cursor:pointer; font-weight:bold; }
         .todo-list { list-style: none; padding: 0; margin-bottom: 30px; }
-
-        .todo-item {
-            display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee;
-            animation: fadeIn 0.3s ease; padding-left: 5px; min-height: 40px;
-        }
-        .todo-item.is-important {
-            background-color: #FFF5F5; border-left: 4px solid var(--important-color); border-radius: 0 5px 5px 0;
-        }
-        .todo-item input[type="checkbox"] {
-            margin-right: 15px; transform: scale(1.3); accent-color: var(--highlight);
-            cursor: pointer; flex-shrink: 0; width: 20px; height: 20px;
-        }
-
+        .todo-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; animation: fadeIn 0.3s ease; padding-left: 5px; min-height: 40px; }
+        .todo-item.is-important { background-color: #FFF5F5; border-left: 4px solid var(--important-color); border-radius: 0 5px 5px 0; }
+        .todo-item input[type="checkbox"] { margin-right: 15px; transform: scale(1.3); accent-color: var(--highlight); cursor: pointer; flex-shrink: 0; width: 20px; height: 20px; }
         .todo-content { flex-grow: 1; display: flex; align-items: center; justify-content: space-between; }
         .todo-item.is-important .todo-content span { font-weight: bold; color: #C06050; }
-
         .action-buttons { display: flex; align-items: center; gap: 10px; }
-
-        .delete-btn, .star-btn {
-            background: none; border: none; cursor: pointer; font-size: 1.3em;
-            padding: 5px 10px; transition: 0.2s; line-height: 1;
-        }
+        .delete-btn, .star-btn { background: none; border: none; cursor: pointer; font-size: 1.3em; padding: 5px 10px; transition: 0.2s; line-height: 1; }
         .delete-btn:hover { color: var(--delete-btn); }
         .star-btn.active { color: var(--star-active); }
         .star-btn.inactive { color: var(--star-inactive); }
-
-        .badge {
-            font-size: 0.75em; padding: 4px 10px; border-radius: 12px; color: white;
-            margin-left: 5px; font-weight: bold; white-space: nowrap;
-        }
+        .badge { font-size: 0.75em; padding: 4px 10px; border-radius: 12px; color: white; margin-left: 5px; font-weight: bold; white-space: nowrap; }
         .badge-oneoff { background-color: var(--tag-oneoff); }
         .badge-daily  { background-color: var(--tag-daily); }
         .badge-weekly { background-color: var(--tag-weekly); }
         .badge-monthly{ background-color: var(--tag-monthly); }
         .badge-google { background-color: var(--tag-google); color: #333; }
-
         .journal-section { margin-top: auto; }
         .journal-title { color: #8C8480; font-weight: bold; margin-bottom: 10px; }
-        .journal-area {
-            width: 100%; height: 120px; padding: 15px; border: 1px solid var(--accent-color);
-            background-color: #FDFBF7; border-radius: 10px; resize: none; font-family: inherit;
-            line-height: 1.6; box-sizing: border-box; outline: none; font-size: 16px;
-        }
-
-        .data-controls {
-            margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--accent-color);
-            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
-        }
-        
-        .btn-control {
-            font-size: 0.85em; padding: 10px 15px; background-color: #fff; border: 1px solid var(--accent-color);
-            border-radius: 20px; cursor: pointer; color: var(--text-color); transition: 0.2s;
-            flex-grow: 1; text-align: center; min-width: 80px;
-        }
+        .journal-area { width: 100%; height: 120px; padding: 15px; border: 1px solid var(--accent-color); background-color: #FDFBF7; border-radius: 10px; resize: none; font-family: inherit; line-height: 1.6; box-sizing: border-box; outline: none; font-size: 16px; }
+        .data-controls { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--accent-color); display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .btn-control { font-size: 0.85em; padding: 10px 15px; background-color: #fff; border: 1px solid var(--accent-color); border-radius: 20px; cursor: pointer; color: var(--text-color); transition: 0.2s; flex-grow: 1; text-align: center; min-width: 80px; }
         .btn-control:hover { background-color: var(--accent-color); color: white; }
         .btn-google { border-color: var(--google-color); color: var(--google-color); font-weight: bold; }
         .btn-google:hover { background-color: var(--google-color); color: white; }
@@ -268,36 +198,18 @@
         .btn-danger:hover { background-color: var(--danger-color); color: white; }
 
         @media (max-width: 768px) {
-            body {
-                height: auto; min-height: 100vh; display: block; background-color: var(--card-bg);
-                padding: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
-            }
-            .app-container {
-                width: 100%; max-width: none; height: auto; min-height: 100vh; flex-direction: column;
-                border-radius: 0; box-shadow: none; overflow: visible;
-            }
-            .sidebar {
-                width: 100%; border-right: none; border-bottom: 2px solid var(--accent-color); 
-                /* パディング調整 */
-                padding: 15px; 
-                box-sizing: border-box; height: auto; overflow: visible; background-color: #F8F4E6; z-index: 2;
-            }
-            
+            body { height: auto; min-height: 100vh; display: block; background-color: var(--card-bg); padding: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+            .app-container { width: 100%; max-width: none; height: auto; min-height: 100vh; flex-direction: column; border-radius: 0; box-shadow: none; overflow: visible; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 2px solid var(--accent-color); padding: 15px; box-sizing: border-box; height: auto; overflow: visible; background-color: #F8F4E6; z-index: 2; }
             .day { font-size: 1em; aspect-ratio: 1; }
-            .calendar-grid { gap: 4px; } /* スマホでもgapを少し確保 */
-
-            .main-content {
-                width: 100%; padding: 20px; box-sizing: border-box; height: auto; overflow: visible; background-color: #FFFFFF; z-index: 1;
-                display: flex; flex-direction: column;
-            }
-
+            .calendar-grid { gap: 4px; }
+            .main-content { width: 100%; padding: 20px; box-sizing: border-box; height: auto; overflow: visible; background-color: #FFFFFF; z-index: 1; display: flex; flex-direction: column; }
             .date-header { order: 1; font-size: 1.5em; margin-top: 10px; }
             .divider { order: 2; }
             .section-title { order: 3; }
             .todo-list { order: 4; margin-bottom: 20px; }
             .input-group { order: 5; margin-bottom: 30px; border-top: 1px dashed #eee; padding-top: 20px; flex-direction: column; align-items: stretch;}
             .journal-section { order: 6; }
-
             .todo-input { width: 100%; margin-bottom: 10px; }
             .add-btn { width: 100%; margin-top: 10px; }
             .type-select, .important-label { width: 100%; box-sizing: border-box; justify-content: center; margin-bottom: 10px;}
@@ -306,23 +218,26 @@
     </style>
 </head>
 <body>
-    <script>
-        window.onerror = function(message) { console.error(message); };
-    </script>
+    <script> window.onerror = function(message) { console.error(message); }; </script>
 
     <div class="app-container">
         <aside class="sidebar" id="swipeArea">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search..." oninput="handleSearch()">
+                <span class="search-icon">🔍</span>
+            </div>
+            <div class="search-result-msg" id="searchResultMsg"></div>
+
             <div class="calendar-header">
-                <button class="nav-btn" onclick="changeMonth(-1)">&#10094;</button>
+                <button class="nav-btn" onclick="navigateCalendar(-1)">&#10094;</button>
                 <div style="display:flex; align-items:center;">
-                    <span id="monthDisplay">Loading...</span>
+                    <span id="monthDisplay" onclick="toggleViewMode()">Loading...</span>
                     <button class="today-btn" onclick="resetToToday()">Today</button>
                 </div>
-                <button class="nav-btn" onclick="changeMonth(1)">&#10095;</button>
+                <button class="nav-btn" onclick="navigateCalendar(1)">&#10095;</button>
             </div>
             
-            <div class="calendar-grid" id="calendarGrid">
-                </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
             
             <div style="margin-top:20px; font-size:0.8rem; color:#888; text-align:center; line-height: 1.6;">
                 <span style="color:var(--highlight)">●</span> Perfect! <br>
@@ -332,11 +247,9 @@
             <div class="data-controls">
                 <button class="btn-control btn-google" onclick="document.getElementById('icalInput').click()">📅 Google読込</button>
                 <input type="file" id="icalInput" style="display:none" onchange="importIcal(this)" accept=".ics">
-
                 <button class="btn-control" onclick="exportData()">📤 保存</button>
                 <button class="btn-control" onclick="document.getElementById('fileInput').click()">📥 読込</button>
                 <input type="file" id="fileInput" style="display:none" onchange="importData(this)" accept=".json">
-                
                 <button class="btn-control btn-danger" onclick="resetApp()">⚠️ 全削除</button>
             </div>
         </aside>
@@ -380,6 +293,9 @@
         const today = new Date();
         let viewYear = today.getFullYear(); let viewMonth = today.getMonth() + 1; 
         let selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        let currentSearchQuery = "";
+        // ★ 表示モード管理用フラグ (false:月表示, true:年表示)
+        let isYearView = false;
 
         function loadData() {
             try {
@@ -404,12 +320,232 @@
                 localStorage.setItem('gemTask_diary', JSON.stringify(diaryEntries));
             } catch (e) {}
         }
+
+        /* --- View Control Logic --- */
+        // モード切替
+        function toggleViewMode() {
+            isYearView = !isYearView;
+            updateUI('anim-fade');
+        }
+
+        // 月を選択して月表示へ遷移
+        function selectMonth(m) {
+            viewMonth = m;
+            isYearView = false;
+            // その月の1日を選択状態にする
+            selectedDateObj = new Date(viewYear, viewMonth - 1, 1);
+            updateUI('anim-fade');
+        }
+
+        // 共通ナビゲーション処理
+        function navigateCalendar(offset) {
+            if (isYearView) {
+                // 年表示モードなら「年」を移動
+                viewYear += offset;
+            } else {
+                // 月表示モードなら「月」を移動
+                viewMonth += offset;
+                if (viewMonth > 12) { viewMonth = 1; viewYear++; } 
+                else if (viewMonth < 1) { viewMonth = 12; viewYear--; }
+                selectedDateObj = new Date(viewYear, viewMonth - 1, 1);
+            }
+            
+            const anim = offset > 0 ? 'anim-next' : 'anim-prev';
+            updateUI(anim);
+        }
+
+        // 今日へ戻る
+        function resetToToday() { 
+            viewYear = today.getFullYear(); viewMonth = today.getMonth() + 1; 
+            selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate()); 
+            isYearView = false; // 月表示に戻す
+            updateUI('anim-fade');
+        }
+
+        /* --- UI Update Master --- */
+        // 画面描画の司令塔
+        function updateUI(animationClass = '') {
+            renderCalendarHeader();
+            
+            if (isYearView) {
+                renderYearGrid(animationClass);
+                // 年表示中は右側のタスクリストなどは空にするか、何もしない（今回はそのまま残すが操作対象外）
+            } else {
+                renderMonthGrid(animationClass);
+                renderTasks();
+                // 日記エリア更新
+                const dateStr = getDateString(selectedDateObj);
+                document.getElementById('journalInput').value = diaryEntries[dateStr] || "";
+            }
+            
+            updateSearchCount();
+        }
+
+        function renderCalendarHeader() {
+            const display = document.getElementById('monthDisplay');
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            
+            if (isYearView) {
+                display.textContent = `${viewYear}`; // 年だけ表示
+            } else {
+                display.textContent = `${monthNames[viewMonth - 1]} ${viewYear}`; // 月+年
+            }
+            
+            // 右側のヘッダーも更新
+            const dateStr = getDateString(selectedDateObj);
+            const dayOfWeekStr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][selectedDateObj.getDay()];
+            document.getElementById('headerDateDisplay').textContent = `${viewMonth}/${selectedDateObj.getDate()} ${dayOfWeekStr}`;
+        }
+
+        /* --- Render Grids --- */
+        // ★ 月表示モードの描画 (旧 renderCalendar)
+        function renderMonthGrid(animationClass) {
+            const grid = document.getElementById('calendarGrid');
+            grid.className = 'calendar-grid grid-month-view'; // クラス切り替え
+            void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
+            grid.innerHTML = "";
+
+            const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            weekdays.forEach(day => { const el = document.createElement('div'); el.className = 'weekday'; el.textContent = day; grid.appendChild(el); });
+
+            const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay(); 
+            const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) { const el = document.createElement('div'); el.className = 'day empty'; grid.appendChild(el); }
+            for (let i = 1; i <= daysInMonth; i++) {
+                const el = document.createElement('div'); el.className = 'day'; el.textContent = i;
+                
+                // タスク状態チェック
+                const tasks = getTasksForDate(i, viewMonth, viewYear); // 引数追加
+                if (tasks.length > 0) {
+                    const dateStr = `${viewYear}-${viewMonth}-${i}`;
+                    const completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length;
+                    if (completedCount === tasks.length) el.classList.add('perfect'); else el.classList.add('has-pending');
+                    if (tasks.some(t => t.isImportant)) el.classList.add('has-important');
+                }
+                
+                // 検索ヒット
+                if(checkSearchHit(i, viewMonth, viewYear)) el.classList.add('search-hit');
+
+                if(!isYearView && i === selectedDateObj.getDate() && viewMonth === (selectedDateObj.getMonth() + 1) && viewYear === selectedDateObj.getFullYear()) el.classList.add('active');
+                
+                el.onclick = () => { selectedDateObj = new Date(viewYear, viewMonth - 1, i); updateUI(); };
+                grid.appendChild(el);
+            }
+        }
+
+        // ★ 年表示モードの描画 (新規作成)
+        function renderYearGrid(animationClass) {
+            const grid = document.getElementById('calendarGrid');
+            grid.className = 'calendar-grid grid-year-view'; // クラス切り替え
+            void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
+            grid.innerHTML = "";
+
+            const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            for (let m = 1; m <= 12; m++) {
+                const el = document.createElement('div');
+                el.className = 'month-cell';
+                el.textContent = monthNamesShort[m-1];
+                
+                // 今表示していた月なら強調
+                if(m === viewMonth) el.classList.add('current-month');
+
+                // ★ 検索ヒットチェック (年表示用)
+                if (currentSearchQuery) {
+                    // その月にヒットするものがいくつあるか計算
+                    let hitCount = 0;
+                    const daysInM = new Date(viewYear, m, 0).getDate();
+                    for(let d=1; d<=daysInM; d++) {
+                        if(checkSearchHit(d, m, viewYear)) hitCount++;
+                    }
+                    if (hitCount > 0) {
+                        el.classList.add('has-search-hit');
+                        el.setAttribute('data-hit-count', hitCount); // 件数をCSSで表示
+                    }
+                }
+
+                el.onclick = () => selectMonth(m);
+                grid.appendChild(el);
+            }
+        }
+
+        /* --- Search Logic Update --- */
+        function handleSearch() {
+            const input = document.getElementById('searchInput');
+            currentSearchQuery = input.value.trim().toLowerCase();
+            updateUI(); // 全体更新
+        }
+
+        function updateSearchCount() {
+            const msg = document.getElementById('searchResultMsg');
+            if (!currentSearchQuery) { msg.textContent = ""; return; }
+            
+            // 年表示なら「今年のヒット数」、月表示なら「今月のヒット数」
+            let totalHits = 0;
+            if (isYearView) {
+                // 全月の合計
+                for(let m=1; m<=12; m++) {
+                    const daysInM = new Date(viewYear, m, 0).getDate();
+                    for(let d=1; d<=daysInM; d++) { if(checkSearchHit(d, m, viewYear)) totalHits++; }
+                }
+                msg.textContent = `${totalHits} matches in ${viewYear}`;
+            } else {
+                const daysInM = new Date(viewYear, viewMonth, 0).getDate();
+                for(let d=1; d<=daysInM; d++) { if(checkSearchHit(d, viewMonth, viewYear)) totalHits++; }
+                msg.textContent = `${totalHits} matches in this month`;
+            }
+        }
+
+        // 引数を拡張して汎用化
+        function checkSearchHit(day, month, year) {
+            if (!currentSearchQuery) return false;
+            const query = currentSearchQuery;
+            
+            const tasks = getTasksForDate(day, month, year);
+            const taskHit = tasks.some(t => t.text.toLowerCase().includes(query));
+            
+            const dateStr = `${year}-${month}-${day}`;
+            const journalText = diaryEntries[dateStr] || "";
+            const journalHit = journalText.toLowerCase().includes(query);
+            
+            return taskHit || journalHit;
+        }
+
+        /* --- Helper Logic --- */
+        // 引数で年月を指定できるように修正
+        function getTasksForDate(day, month, year) {
+            const targetDateObj = new Date(year, month - 1, day); 
+            const weekday = targetDateObj.getDay();
+            return taskDefinitions.filter(task => {
+                if (task.type === 'daily') return true;
+                if (task.type === 'weekly') return task.targetWeekday === weekday;
+                if (task.type === 'monthly') return task.targetDayOfMonth === day;
+                if (task.type === 'google' || task.type === 'oneoff') { 
+                    const tYear = task.targetYear || viewYear; 
+                    const tMonth = task.targetMonth || viewMonth; 
+                    return task.targetDate === day && tYear === year && tMonth === month; 
+                }
+                return false;
+            });
+        }
+
+        function highlightText(text) {
+            if (!currentSearchQuery) return text;
+            const regex = new RegExp(`(${escapeRegExp(currentSearchQuery)})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+        function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+        function getDateString(dateObj) { const y = dateObj.getFullYear(); const m = dateObj.getMonth() + 1; const d = dateObj.getDate(); return `${y}-${m}-${d}`; }
+
+        /* --- Swipe Logic --- */
         const swipeArea = document.getElementById('swipeArea');
         let touchStartX = 0; let touchEndX = 0;
         swipeArea.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
         swipeArea.addEventListener('touchend', function(e) { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, {passive: true});
-        function handleSwipe() { if (Math.abs(touchStartX - touchEndX) > 50) { if (touchStartX - touchEndX > 0) changeMonth(1); else changeMonth(-1); } }
-        function resetToToday() { viewYear = today.getFullYear(); viewMonth = today.getMonth() + 1; selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate()); renderCalendar('anim-fade'); updateHeader(); renderTasks(); }
+        function handleSwipe() { if (Math.abs(touchStartX - touchEndX) > 50) { if (touchStartX - touchEndX > 0) navigateCalendar(1); else navigateCalendar(-1); } }
+
+        /* --- Reset & Import/Export (Same as before) --- */
         function resetApp() { if(confirm("【警告】データを全削除しますか？")) { localStorage.removeItem('gemTask_definitions'); localStorage.removeItem('gemTask_logs'); localStorage.removeItem('gemTask_diary'); initDefaultData(); resetToToday(); alert("初期化しました🌱"); } }
         function importIcal(input) {
             const file = input.files[0]; if (!file) return;
@@ -423,7 +559,7 @@
                             const exists = taskDefinitions.some(t => t.text === ev.title && t.targetDate === ev.day && t.type === 'google' && t.targetYear === ev.year && t.targetMonth === ev.month);
                             if (!exists) { taskDefinitions.push({ id: Date.now() + Math.random(), text: ev.title, type: "google", targetDate: ev.day, targetYear: ev.year, targetMonth: ev.month, targetWeekday: null, targetDayOfMonth: null, isImportant: false }); count++; }
                         });
-                        saveData(); renderCalendar('anim-fade'); renderTasks(); alert(`${count}件読み込みました📅`);
+                        saveData(); updateUI('anim-fade'); alert(`${count}件読み込みました📅`);
                     } else { alert("予定なし💦"); }
                 } catch(e) { alert("読込エラー"); }
             };
@@ -458,60 +594,11 @@
             };
             reader.readAsText(file); input.value = '';
         }
-        window.onload = () => { loadData(); renderCalendar('anim-fade'); updateHeader(); renderTasks(); };
-        function getDateString(dateObj) { const y = dateObj.getFullYear(); const m = dateObj.getMonth() + 1; const d = dateObj.getDate(); return `${y}-${m}-${d}`; }
-        function changeMonth(offset) { viewMonth += offset; if (viewMonth > 12) { viewMonth = 1; viewYear++; } else if (viewMonth < 1) { viewMonth = 12; viewYear--; } selectedDateObj = new Date(viewYear, viewMonth - 1, 1); const animClass = offset > 0 ? 'anim-next' : 'anim-prev'; renderCalendar(animClass); updateHeader(); renderTasks(); }
-        function getTasksForDate(day) {
-            const targetDateObj = new Date(viewYear, viewMonth - 1, day); const weekday = targetDateObj.getDay();
-            return taskDefinitions.filter(task => {
-                if (task.type === 'daily') return true;
-                if (task.type === 'weekly') return task.targetWeekday === weekday;
-                if (task.type === 'monthly') return task.targetDayOfMonth === day;
-                if (task.type === 'google' || task.type === 'oneoff') { const tYear = task.targetYear || viewYear; const tMonth = task.targetMonth || viewMonth; return task.targetDate === day && tYear === viewYear && tMonth === viewMonth; }
-                return false;
-            });
-        }
-
-        // ★ 修正: 曜日ヘッダーもJSで描画するように変更（同じグリッド内に入れるため）
-        function renderCalendar(animationClass = '') {
-            const grid = document.getElementById('calendarGrid');
-            grid.className = 'calendar-grid'; void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
-            const monthDisplay = document.getElementById('monthDisplay');
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            monthDisplay.textContent = `${monthNames[viewMonth - 1]} ${viewYear}`;
-            
-            grid.innerHTML = "";
-
-            // ★ ここで曜日ヘッダーを追加
-            const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            weekdays.forEach(day => {
-                const el = document.createElement('div');
-                el.className = 'weekday';
-                el.textContent = day;
-                grid.appendChild(el);
-            });
-
-            const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay(); const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
-            for (let i = 0; i < firstDay; i++) { const emptyCell = document.createElement('div'); emptyCell.className = 'day empty'; grid.appendChild(emptyCell); }
-            for (let i = 1; i <= daysInMonth; i++) {
-                const dayEl = document.createElement('div'); dayEl.className = 'day'; dayEl.textContent = i; dayEl.dataset.day = i;
-                const tasks = getTasksForDate(i);
-                if (tasks.length > 0) {
-                    const dateStr = `${viewYear}-${viewMonth}-${i}`;
-                    const completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length;
-                    const hasImportant = tasks.some(t => t.isImportant);
-                    if (completedCount === tasks.length) dayEl.classList.add('perfect'); else dayEl.classList.add('has-pending');
-                    if (hasImportant) dayEl.classList.add('has-important');
-                }
-                if(i === selectedDateObj.getDate() && viewMonth === (selectedDateObj.getMonth() + 1) && viewYear === selectedDateObj.getFullYear()) dayEl.classList.add('active');
-                dayEl.onclick = () => selectDate(i); grid.appendChild(dayEl);
-            }
-        }
-        function selectDate(day) { selectedDateObj = new Date(viewYear, viewMonth - 1, day); renderCalendar(); updateHeader(); renderTasks(); }
-        function updateHeader() { const dateStr = getDateString(selectedDateObj); const dayOfWeekStr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][selectedDateObj.getDay()]; document.getElementById('headerDateDisplay').textContent = `${viewMonth}/${selectedDateObj.getDate()} ${dayOfWeekStr}`; document.getElementById('journalInput').value = diaryEntries[dateStr] || ""; }
+        
+        // --- Task Handling ---
         function renderTasks() {
             const list = document.getElementById('todoList'); const progressDisplay = document.getElementById('progressDisplay'); list.innerHTML = "";
-            const day = selectedDateObj.getDate(); const dateStr = getDateString(selectedDateObj); const tasks = getTasksForDate(day);
+            const day = selectedDateObj.getDate(); const dateStr = getDateString(selectedDateObj); const tasks = getTasksForDate(day, viewMonth, viewYear);
             let completedCount = 0;
             if (tasks.length === 0) { progressDisplay.textContent = "No Tasks"; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "#aaa"; }
             else {
@@ -526,10 +613,11 @@
                 let badgeHtml = "", badgeText = "";
                 if (task.type === 'daily') { badgeHtml = "badge-daily"; badgeText = "毎日"; } else if (task.type === 'weekly') { badgeHtml = "badge-weekly"; badgeText = "毎週"; } else if (task.type === 'monthly') { badgeHtml = "badge-monthly"; badgeText = "毎月"; } else if (task.type === 'google') { badgeHtml = "badge-google"; badgeText = "Google"; } else { badgeHtml = "badge-oneoff"; badgeText = "単発"; }
                 const starClass = task.isImportant ? 'active' : 'inactive'; const starIcon = task.isImportant ? '★' : '☆';
+                const displayText = highlightText(task.text);
                 li.innerHTML = `
                     <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTask(${task.id})">
                     <div class="todo-content">
-                        <span>${task.text}</span>
+                        <span>${displayText}</span>
                         <div class="action-buttons"><span class="badge ${badgeHtml}">${badgeText}</span><button class="star-btn ${starClass}" onclick="toggleImportance(${task.id})">${starIcon}</button><button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button></div>
                     </div>`;
                 list.appendChild(li);
@@ -539,16 +627,18 @@
             const input = document.getElementById('taskInput'); const typeSelect = document.getElementById('taskType'); const importantCheck = document.getElementById('importantCheck');
             const text = input.value.trim(); if (!text) return;
             const newTask = { id: Date.now(), text: text, type: typeSelect.value, targetDate: typeSelect.value === 'oneoff' ? selectedDateObj.getDate() : null, targetYear: typeSelect.value === 'oneoff' ? viewYear : null, targetMonth: typeSelect.value === 'oneoff' ? viewMonth : null, targetWeekday: typeSelect.value === 'weekly' ? selectedDateObj.getDay() : null, targetDayOfMonth: typeSelect.value === 'monthly' ? selectedDateObj.getDate() : null, isImportant: importantCheck.checked };
-            taskDefinitions.push(newTask); saveData(); input.value = ""; importantCheck.checked = false; renderCalendar(); renderTasks();
+            taskDefinitions.push(newTask); saveData(); input.value = ""; importantCheck.checked = false; updateUI();
         }
         function toggleTask(id) {
             const dateStr = getDateString(selectedDateObj); const existingIndex = completionLog.findIndex(log => log.taskId === id && log.dateStr === dateStr);
             if (existingIndex !== -1) completionLog.splice(existingIndex, 1); else completionLog.push({ taskId: id, dateStr: dateStr });
-            saveData(); renderTasks(); renderCalendar(); 
+            saveData(); updateUI();
         }
-        function toggleImportance(id) { const task = taskDefinitions.find(t => t.id === id); if (task) { task.isImportant = !task.isImportant; saveData(); renderTasks(); renderCalendar(); } }
-        function deleteTask(id) { if(confirm("削除しますか？")) { taskDefinitions = taskDefinitions.filter(t => t.id !== id); completionLog = completionLog.filter(log => log.taskId !== id); saveData(); renderTasks(); renderCalendar(); } }
-        function handleDiaryInput() { const text = document.getElementById('journalInput').value; const dateStr = getDateString(selectedDateObj); diaryEntries[dateStr] = text; saveData(); }
+        function toggleImportance(id) { const task = taskDefinitions.find(t => t.id === id); if (task) { task.isImportant = !task.isImportant; saveData(); updateUI(); } }
+        function deleteTask(id) { if(confirm("削除しますか？")) { taskDefinitions = taskDefinitions.filter(t => t.id !== id); completionLog = completionLog.filter(log => log.taskId !== id); saveData(); updateUI(); } }
+        function handleDiaryInput() { const text = document.getElementById('journalInput').value; const dateStr = getDateString(selectedDateObj); diaryEntries[dateStr] = text; saveData(); updateSearchCount(); }
+
+        window.onload = () => { loadData(); updateUI('anim-fade'); };
     </script>
 </body>
 </html>
