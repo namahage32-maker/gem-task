@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GemTask - Life Log</title>
+    <title>GemTask - Smart Input</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     <link rel="apple-touch-icon" href="icon-512.png">
@@ -61,7 +61,7 @@
             overflow-y: auto; touch-action: pan-y; overflow-x: hidden;
         }
 
-        /* --- 検索エリア --- */
+        /* 検索エリア */
         .search-box { margin-bottom: 10px; position: relative; }
         .search-input {
             width: 100%; padding: 10px 35px 10px 15px; border: 2px solid var(--accent-color);
@@ -71,7 +71,7 @@
         .search-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #aaa; pointer-events: none; }
         .search-result-msg { font-size: 0.75em; color: var(--search-marker); text-align: center; margin-bottom: 5px; min-height: 1.2em; font-weight: bold; }
 
-        /* --- カレンダーヘッダー --- */
+        /* カレンダーヘッダー */
         .calendar-header {
             font-size: 1.1em; font-weight: bold; margin-bottom: 15px;
             display: flex; justify-content: space-between; align-items: center;
@@ -91,7 +91,7 @@
         }
         .today-btn:hover { opacity: 0.8; }
 
-        /* --- グリッド --- */
+        /* グリッド */
         .calendar-grid {
             display: grid; gap: 4px; text-align: center; min-height: 250px;
             user-select: none; width: 100%; transition: opacity 0.2s;
@@ -100,7 +100,7 @@
         .grid-year-view { grid-template-columns: repeat(3, 1fr); align-content: start; gap: 10px; padding-top: 20px; }
         .weekday { font-size: 0.8em; color: #888; padding-bottom: 5px; font-weight: bold; }
 
-        /* --- 日付セル --- */
+        /* 日付セル */
         .day {
             aspect-ratio: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: center; border-radius: 50%;
@@ -116,7 +116,7 @@
         .day.perfect.search-hit { background-color: var(--search-marker) !important; color: white !important; border: 2px solid white !important; }
         .day.search-hit { border: 2px solid var(--search-marker) !important; color: var(--search-marker); font-weight: bold; background-color: #FFF0F5; }
 
-        /* --- 月セル --- */
+        /* 月セル */
         .month-cell {
             aspect-ratio: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: center;
             border-radius: 10px; cursor: pointer; border: 1px solid var(--accent-color);
@@ -164,7 +164,6 @@
         .badge-monthly{ background-color: var(--tag-monthly); }
         .badge-google { background-color: var(--tag-google); color: #333; }
         
-        /* ★ 食事ログエリア */
         .meal-section { margin-top: 20px; margin-bottom: 20px; }
         .meal-row { display: flex; align-items: center; margin-bottom: 8px; }
         .meal-icon { font-size: 1.5em; width: 40px; text-align: center; margin-right: 5px; cursor: default; }
@@ -198,11 +197,8 @@
             .section-title { order: 3; }
             .todo-list { order: 4; margin-bottom: 20px; }
             .input-group { order: 5; margin-bottom: 30px; border-top: 1px dashed #eee; padding-top: 20px; flex-direction: column; align-items: stretch;}
-            
-            /* 食事ログの位置調整 */
             .meal-section { order: 6; }
             .journal-section { order: 7; }
-            
             .todo-input { width: 100%; margin-bottom: 10px; }
             .add-btn { width: 100%; margin-top: 10px; }
             .type-select, .important-label { width: 100%; box-sizing: border-box; justify-content: center; margin-bottom: 10px;}
@@ -257,7 +253,7 @@
             <div class="section-title">🌿 タスクリスト</div>
             
             <div class="input-group">
-                <input type="text" class="todo-input" id="taskInput" placeholder="新しいタスク...">
+                <input type="text" class="todo-input" id="taskInput" placeholder="新しいタスク..." list="task-suggestions">
                 <div style="display:flex; gap:10px; width:100%;">
                     <select id="taskType" class="type-select" style="flex:1">
                         <option value="oneoff">📅 単発</option>
@@ -278,15 +274,15 @@
                 <div class="section-title">🍽️ 食事の記録</div>
                 <div class="meal-row">
                     <span class="meal-icon">🍳</span>
-                    <input type="text" class="meal-input" id="mealBreakfast" placeholder="朝ごはん" oninput="handleMealInput()">
+                    <input type="text" class="meal-input" id="mealBreakfast" placeholder="朝ごはん" oninput="handleMealInput()" list="meal-suggestions">
                 </div>
                 <div class="meal-row">
                     <span class="meal-icon">🍱</span>
-                    <input type="text" class="meal-input" id="mealLunch" placeholder="お昼ごはん" oninput="handleMealInput()">
+                    <input type="text" class="meal-input" id="mealLunch" placeholder="お昼ごはん" oninput="handleMealInput()" list="meal-suggestions">
                 </div>
                 <div class="meal-row">
                     <span class="meal-icon">🍽️</span>
-                    <input type="text" class="meal-input" id="mealDinner" placeholder="夕ごはん" oninput="handleMealInput()">
+                    <input type="text" class="meal-input" id="mealDinner" placeholder="夕ごはん" oninput="handleMealInput()" list="meal-suggestions">
                 </div>
             </div>
 
@@ -297,11 +293,11 @@
         </main>
     </div>
 
-    <script>
-        let taskDefinitions = []; let completionLog = []; let diaryEntries = {}; 
-        // ★ 新しいデータストア: 食事記録
-        let mealEntries = {}; 
+    <datalist id="task-suggestions"></datalist>
+    <datalist id="meal-suggestions"></datalist>
 
+    <script>
+        let taskDefinitions = []; let completionLog = []; let diaryEntries = {}; let mealEntries = {}; 
         const today = new Date();
         let viewYear = today.getFullYear(); let viewMonth = today.getMonth() + 1; 
         let selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -313,14 +309,18 @@
                 const savedDefs = localStorage.getItem('gemTask_definitions');
                 const savedLogs = localStorage.getItem('gemTask_logs');
                 const savedDiary = localStorage.getItem('gemTask_diary');
-                const savedMeals = localStorage.getItem('gemTask_meals'); // 読み込み
+                const savedMeals = localStorage.getItem('gemTask_meals');
                 
                 if (savedDefs) taskDefinitions = JSON.parse(savedDefs);
                 if (savedLogs) completionLog = JSON.parse(savedLogs);
                 if (savedDiary) diaryEntries = JSON.parse(savedDiary);
-                if (savedMeals) mealEntries = JSON.parse(savedMeals); // パース
+                if (savedMeals) mealEntries = JSON.parse(savedMeals);
                 
                 if (!savedDefs && !savedLogs && !savedDiary) initDefaultData();
+                
+                // ★ 読み込み後にサジェストリストを更新
+                updateSuggestions();
+                
             } catch (e) { initDefaultData(); }
         }
         
@@ -335,8 +335,47 @@
                 localStorage.setItem('gemTask_definitions', JSON.stringify(taskDefinitions));
                 localStorage.setItem('gemTask_logs', JSON.stringify(completionLog));
                 localStorage.setItem('gemTask_diary', JSON.stringify(diaryEntries));
-                localStorage.setItem('gemTask_meals', JSON.stringify(mealEntries)); // 保存
+                localStorage.setItem('gemTask_meals', JSON.stringify(mealEntries));
+                
+                // ★ 保存時にもサジェストリストを更新（新しい入力があったかも）
+                updateSuggestions();
             } catch (e) {}
+        }
+
+        /* --- ★ Suggestion Logic --- */
+        function updateSuggestions() {
+            // 1. タスクの候補を作成
+            // Setを使って重複を除去
+            const taskSet = new Set(taskDefinitions.map(t => t.text));
+            const taskListEl = document.getElementById('task-suggestions');
+            taskListEl.innerHTML = '';
+            
+            // 最新のものから出したい場合もあるけど、Setは順序保持しないので単純に追加
+            taskSet.forEach(text => {
+                if(text) {
+                    const opt = document.createElement('option');
+                    opt.value = text;
+                    taskListEl.appendChild(opt);
+                }
+            });
+
+            // 2. 食事の候補を作成
+            const mealSet = new Set();
+            Object.values(mealEntries).forEach(meal => {
+                if(meal.b) mealSet.add(meal.b);
+                if(meal.l) mealSet.add(meal.l);
+                if(meal.d) mealSet.add(meal.d);
+            });
+            const mealListEl = document.getElementById('meal-suggestions');
+            mealListEl.innerHTML = '';
+            
+            mealSet.forEach(text => {
+                if(text) {
+                    const opt = document.createElement('option');
+                    opt.value = text;
+                    mealListEl.appendChild(opt);
+                }
+            });
         }
 
         /* --- View Control --- */
@@ -355,11 +394,8 @@
             if (isYearView) { renderYearGrid(animationClass); } 
             else {
                 renderMonthGrid(animationClass); renderTasks();
-                
-                // 日記・食事の表示更新
                 const dateStr = getDateString(selectedDateObj);
                 document.getElementById('journalInput').value = diaryEntries[dateStr] || "";
-                
                 const meals = mealEntries[dateStr] || { b: "", l: "", d: "" };
                 document.getElementById('mealBreakfast').value = meals.b || "";
                 document.getElementById('mealLunch').value = meals.l || "";
@@ -444,11 +480,8 @@
             const dateStr = `${year}-${month}-${day}`;
             const journalText = diaryEntries[dateStr] || "";
             const journalHit = journalText.toLowerCase().includes(query);
-            
-            // ★ 食事ログも検索対象に追加
             const meals = mealEntries[dateStr] || { b: "", l: "", d: "" };
             const mealHit = (meals.b + meals.l + meals.d).toLowerCase().includes(query);
-
             return taskHit || journalHit || mealHit;
         }
         function highlightText(text) {
@@ -459,7 +492,6 @@
         function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
         /* --- Handlers --- */
-        // ★ 食事入力ハンドラ
         function handleMealInput() {
             const b = document.getElementById('mealBreakfast').value;
             const l = document.getElementById('mealLunch').value;
@@ -469,11 +501,9 @@
             if(!mealEntries[dateStr]) mealEntries[dateStr] = {};
             mealEntries[dateStr] = { b: b, l: l, d: d };
             
-            saveData(); 
-            updateSearchCount(); // 検索中に入力した場合、ヒット数が変わるかも
+            saveData(); updateSearchCount();
         }
 
-        /* --- Existing Handlers (Reset, Import, Export, Task, Diary) --- */
         function resetApp() { if(confirm("【警告】データを全削除しますか？")) { localStorage.removeItem('gemTask_definitions'); localStorage.removeItem('gemTask_logs'); localStorage.removeItem('gemTask_diary'); localStorage.removeItem('gemTask_meals'); initDefaultData(); resetToToday(); alert("初期化しました🌱"); } }
         function importIcal(input) {
             const file = input.files[0]; if (!file) return;
