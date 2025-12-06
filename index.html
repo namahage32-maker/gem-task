@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GemTask_v4.0</title>
-	<link rel="manifest" href="manifest.json">
+    <title>GemTask - Life Log</title>
+    <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     <link rel="apple-touch-icon" href="icon-512.png">
     <link rel="icon" type="image/png" href="icon-512.png">
+    
     <style>
         /* --- デザイン設定 (共通) --- */
         :root {
@@ -82,39 +83,24 @@
             display: flex; align-items: center; justify-content: center; transition: 0.2s;
         }
         .nav-btn:hover { background-color: var(--accent-color); color: white; }
-        
-        /* ★ 年月表示部分をボタン化 */
-        #monthDisplay {
-            cursor: pointer; padding: 5px 10px; border-radius: 10px; transition: 0.2s;
-        }
+        #monthDisplay { cursor: pointer; padding: 5px 10px; border-radius: 10px; transition: 0.2s; }
         #monthDisplay:hover { background-color: rgba(255,255,255,0.8); color: var(--accent-color); }
-
         .today-btn {
             font-size: 0.7em; background-color: var(--text-color); color: white; border: none;
             padding: 4px 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-left: 5px;
         }
         .today-btn:hover { opacity: 0.8; }
 
-        /* --- グリッドシステム (月・年共通) --- */
+        /* --- グリッド --- */
         .calendar-grid {
             display: grid; gap: 4px; text-align: center; min-height: 250px;
             user-select: none; width: 100%; transition: opacity 0.2s;
         }
-
-        /* 月表示モードのグリッド (7列) */
         .grid-month-view { grid-template-columns: repeat(7, 1fr); }
-        
-        /* 年表示モードのグリッド (3列) */
-        .grid-year-view { 
-            grid-template-columns: repeat(3, 1fr); 
-            align-content: start; 
-            gap: 10px; 
-            padding-top: 20px;
-        }
-
+        .grid-year-view { grid-template-columns: repeat(3, 1fr); align-content: start; gap: 10px; padding-top: 20px; }
         .weekday { font-size: 0.8em; color: #888; padding-bottom: 5px; font-weight: bold; }
 
-        /* --- 日付セル (月表示用) --- */
+        /* --- 日付セル --- */
         .day {
             aspect-ratio: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: center; border-radius: 50%;
@@ -130,36 +116,25 @@
         .day.perfect.search-hit { background-color: var(--search-marker) !important; color: white !important; border: 2px solid white !important; }
         .day.search-hit { border: 2px solid var(--search-marker) !important; color: var(--search-marker); font-weight: bold; background-color: #FFF0F5; }
 
-        /* --- 月セル (年表示用) --- */
+        /* --- 月セル --- */
         .month-cell {
-            aspect-ratio: 1.5; /* 横長 */
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            aspect-ratio: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: center;
             border-radius: 10px; cursor: pointer; border: 1px solid var(--accent-color);
-            background-color: #fff; transition: 0.2s; font-weight: bold; color: var(--text-color);
-            position: relative;
+            background-color: #fff; transition: 0.2s; font-weight: bold; color: var(--text-color); position: relative;
         }
         .month-cell:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .month-cell.current-month { background-color: var(--text-color); color: white; border-color: var(--text-color); }
-        
-        /* 年表示での検索ヒット */
-        .month-cell.has-search-hit {
-            border: 2px solid var(--search-marker);
-            background-color: #FFF0F5;
-            color: var(--search-marker);
-        }
+        .month-cell.has-search-hit { border: 2px solid var(--search-marker); background-color: #FFF0F5; color: var(--search-marker); }
         .month-cell.has-search-hit::after {
-            content: attr(data-hit-count); /* 件数を表示 */
-            position: absolute; bottom: 5px; right: 8px;
-            font-size: 0.7em; background: var(--search-marker); color: white;
-            padding: 2px 6px; border-radius: 10px;
+            content: attr(data-hit-count); position: absolute; bottom: 5px; right: 8px;
+            font-size: 0.7em; background: var(--search-marker); color: white; padding: 2px 6px; border-radius: 10px;
         }
 
-        /* アニメーション */
         @keyframes fadeInZoom { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .anim-fade { animation: fadeInZoom 0.3s ease-out; }
         mark { background-color: var(--search-highlight); color: inherit; padding: 0 2px; border-radius: 2px; }
 
-        /* メインコンテンツ (変更なし) */
+        /* メインコンテンツ */
         .main-content { width: 65%; padding: 40px 50px; overflow-y: auto; position: relative; display: flex; flex-direction: column; }
         .date-header { font-size: 2em; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         .progress-display { font-size: 0.5em; background-color: #F0EBE0; padding: 5px 15px; border-radius: 20px; color: var(--text-color); font-weight: normal; white-space: nowrap; }
@@ -188,9 +163,21 @@
         .badge-weekly { background-color: var(--tag-weekly); }
         .badge-monthly{ background-color: var(--tag-monthly); }
         .badge-google { background-color: var(--tag-google); color: #333; }
+        
+        /* ★ 食事ログエリア */
+        .meal-section { margin-top: 20px; margin-bottom: 20px; }
+        .meal-row { display: flex; align-items: center; margin-bottom: 8px; }
+        .meal-icon { font-size: 1.5em; width: 40px; text-align: center; margin-right: 5px; cursor: default; }
+        .meal-input {
+            flex-grow: 1; padding: 8px 12px; border: 1px solid var(--accent-color); border-radius: 10px;
+            font-family: inherit; outline: none; background-color: #FAFAFA; font-size: 14px; transition: 0.2s;
+        }
+        .meal-input:focus { background-color: #fff; border-color: var(--text-color); }
+
         .journal-section { margin-top: auto; }
         .journal-title { color: #8C8480; font-weight: bold; margin-bottom: 10px; }
-        .journal-area { width: 100%; height: 120px; padding: 15px; border: 1px solid var(--accent-color); background-color: #FDFBF7; border-radius: 10px; resize: none; font-family: inherit; line-height: 1.6; box-sizing: border-box; outline: none; font-size: 16px; }
+        .journal-area { width: 100%; height: 100px; padding: 15px; border: 1px solid var(--accent-color); background-color: #FDFBF7; border-radius: 10px; resize: none; font-family: inherit; line-height: 1.6; box-sizing: border-box; outline: none; font-size: 16px; }
+        
         .data-controls { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--accent-color); display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
         .btn-control { font-size: 0.85em; padding: 10px 15px; background-color: #fff; border: 1px solid var(--accent-color); border-radius: 20px; cursor: pointer; color: var(--text-color); transition: 0.2s; flex-grow: 1; text-align: center; min-width: 80px; }
         .btn-control:hover { background-color: var(--accent-color); color: white; }
@@ -211,7 +198,11 @@
             .section-title { order: 3; }
             .todo-list { order: 4; margin-bottom: 20px; }
             .input-group { order: 5; margin-bottom: 30px; border-top: 1px dashed #eee; padding-top: 20px; flex-direction: column; align-items: stretch;}
-            .journal-section { order: 6; }
+            
+            /* 食事ログの位置調整 */
+            .meal-section { order: 6; }
+            .journal-section { order: 7; }
+            
             .todo-input { width: 100%; margin-bottom: 10px; }
             .add-btn { width: 100%; margin-top: 10px; }
             .type-select, .important-label { width: 100%; box-sizing: border-box; justify-content: center; margin-bottom: 10px;}
@@ -283,6 +274,22 @@
 
             <ul class="todo-list" id="todoList"></ul>
 
+            <div class="meal-section">
+                <div class="section-title">🍽️ 食事の記録</div>
+                <div class="meal-row">
+                    <span class="meal-icon">🍳</span>
+                    <input type="text" class="meal-input" id="mealBreakfast" placeholder="朝ごはん" oninput="handleMealInput()">
+                </div>
+                <div class="meal-row">
+                    <span class="meal-icon">🍱</span>
+                    <input type="text" class="meal-input" id="mealLunch" placeholder="お昼ごはん" oninput="handleMealInput()">
+                </div>
+                <div class="meal-row">
+                    <span class="meal-icon">🍽️</span>
+                    <input type="text" class="meal-input" id="mealDinner" placeholder="夕ごはん" oninput="handleMealInput()">
+                </div>
+            </div>
+
             <div class="journal-section">
                 <div class="journal-title">📝 今日のひとこと日記</div>
                 <textarea class="journal-area" id="journalInput" placeholder="今日はどんな1日だった？" oninput="handleDiaryInput()"></textarea>
@@ -292,11 +299,13 @@
 
     <script>
         let taskDefinitions = []; let completionLog = []; let diaryEntries = {}; 
+        // ★ 新しいデータストア: 食事記録
+        let mealEntries = {}; 
+
         const today = new Date();
         let viewYear = today.getFullYear(); let viewMonth = today.getMonth() + 1; 
         let selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         let currentSearchQuery = "";
-        // ★ 表示モード管理用フラグ (false:月表示, true:年表示)
         let isYearView = false;
 
         function loadData() {
@@ -304,251 +313,168 @@
                 const savedDefs = localStorage.getItem('gemTask_definitions');
                 const savedLogs = localStorage.getItem('gemTask_logs');
                 const savedDiary = localStorage.getItem('gemTask_diary');
+                const savedMeals = localStorage.getItem('gemTask_meals'); // 読み込み
+                
                 if (savedDefs) taskDefinitions = JSON.parse(savedDefs);
                 if (savedLogs) completionLog = JSON.parse(savedLogs);
                 if (savedDiary) diaryEntries = JSON.parse(savedDiary);
+                if (savedMeals) mealEntries = JSON.parse(savedMeals); // パース
+                
                 if (!savedDefs && !savedLogs && !savedDiary) initDefaultData();
             } catch (e) { initDefaultData(); }
         }
+        
         function initDefaultData() {
-            taskDefinitions = []; completionLog = []; diaryEntries = {};
+            taskDefinitions = []; completionLog = []; diaryEntries = {}; mealEntries = {};
             taskDefinitions.push({ id: 1, text: "GemTaskへようこそ", type: "oneoff", targetDate: today.getDate(), targetYear: today.getFullYear(), targetMonth: today.getMonth()+1, isImportant: true });
             saveData();
         }
+
         function saveData() {
             try {
                 localStorage.setItem('gemTask_definitions', JSON.stringify(taskDefinitions));
                 localStorage.setItem('gemTask_logs', JSON.stringify(completionLog));
                 localStorage.setItem('gemTask_diary', JSON.stringify(diaryEntries));
+                localStorage.setItem('gemTask_meals', JSON.stringify(mealEntries)); // 保存
             } catch (e) {}
         }
 
-        /* --- View Control Logic --- */
-        // モード切替
-        function toggleViewMode() {
-            isYearView = !isYearView;
-            updateUI('anim-fade');
-        }
-
-        // 月を選択して月表示へ遷移
-        function selectMonth(m) {
-            viewMonth = m;
-            isYearView = false;
-            // その月の1日を選択状態にする
-            selectedDateObj = new Date(viewYear, viewMonth - 1, 1);
-            updateUI('anim-fade');
-        }
-
-        // 共通ナビゲーション処理
+        /* --- View Control --- */
+        function toggleViewMode() { isYearView = !isYearView; updateUI('anim-fade'); }
+        function selectMonth(m) { viewMonth = m; isYearView = false; selectedDateObj = new Date(viewYear, viewMonth - 1, 1); updateUI('anim-fade'); }
         function navigateCalendar(offset) {
-            if (isYearView) {
-                // 年表示モードなら「年」を移動
-                viewYear += offset;
-            } else {
-                // 月表示モードなら「月」を移動
-                viewMonth += offset;
-                if (viewMonth > 12) { viewMonth = 1; viewYear++; } 
-                else if (viewMonth < 1) { viewMonth = 12; viewYear--; }
-                selectedDateObj = new Date(viewYear, viewMonth - 1, 1);
-            }
-            
-            const anim = offset > 0 ? 'anim-next' : 'anim-prev';
-            updateUI(anim);
+            if (isYearView) { viewYear += offset; } 
+            else { viewMonth += offset; if (viewMonth > 12) { viewMonth = 1; viewYear++; } else if (viewMonth < 1) { viewMonth = 12; viewYear--; } selectedDateObj = new Date(viewYear, viewMonth - 1, 1); }
+            const anim = offset > 0 ? 'anim-next' : 'anim-prev'; updateUI(anim);
         }
+        function resetToToday() { viewYear = today.getFullYear(); viewMonth = today.getMonth() + 1; selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate()); isYearView = false; updateUI('anim-fade'); }
 
-        // 今日へ戻る
-        function resetToToday() { 
-            viewYear = today.getFullYear(); viewMonth = today.getMonth() + 1; 
-            selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate()); 
-            isYearView = false; // 月表示に戻す
-            updateUI('anim-fade');
-        }
-
-        /* --- UI Update Master --- */
-        // 画面描画の司令塔
+        /* --- UI Update --- */
         function updateUI(animationClass = '') {
             renderCalendarHeader();
-            
-            if (isYearView) {
-                renderYearGrid(animationClass);
-                // 年表示中は右側のタスクリストなどは空にするか、何もしない（今回はそのまま残すが操作対象外）
-            } else {
-                renderMonthGrid(animationClass);
-                renderTasks();
-                // 日記エリア更新
+            if (isYearView) { renderYearGrid(animationClass); } 
+            else {
+                renderMonthGrid(animationClass); renderTasks();
+                
+                // 日記・食事の表示更新
                 const dateStr = getDateString(selectedDateObj);
                 document.getElementById('journalInput').value = diaryEntries[dateStr] || "";
+                
+                const meals = mealEntries[dateStr] || { b: "", l: "", d: "" };
+                document.getElementById('mealBreakfast').value = meals.b || "";
+                document.getElementById('mealLunch').value = meals.l || "";
+                document.getElementById('mealDinner').value = meals.d || "";
             }
-            
             updateSearchCount();
         }
 
         function renderCalendarHeader() {
             const display = document.getElementById('monthDisplay');
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            
-            if (isYearView) {
-                display.textContent = `${viewYear}`; // 年だけ表示
-            } else {
-                display.textContent = `${monthNames[viewMonth - 1]} ${viewYear}`; // 月+年
-            }
-            
-            // 右側のヘッダーも更新
-            const dateStr = getDateString(selectedDateObj);
+            display.textContent = isYearView ? `${viewYear}` : `${monthNames[viewMonth - 1]} ${viewYear}`;
             const dayOfWeekStr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][selectedDateObj.getDay()];
             document.getElementById('headerDateDisplay').textContent = `${viewMonth}/${selectedDateObj.getDate()} ${dayOfWeekStr}`;
         }
 
         /* --- Render Grids --- */
-        // ★ 月表示モードの描画 (旧 renderCalendar)
         function renderMonthGrid(animationClass) {
             const grid = document.getElementById('calendarGrid');
-            grid.className = 'calendar-grid grid-month-view'; // クラス切り替え
-            void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
+            grid.className = 'calendar-grid grid-month-view'; void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
             grid.innerHTML = "";
-
             const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             weekdays.forEach(day => { const el = document.createElement('div'); el.className = 'weekday'; el.textContent = day; grid.appendChild(el); });
-
-            const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay(); 
-            const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
-
+            const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay(); const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
             for (let i = 0; i < firstDay; i++) { const el = document.createElement('div'); el.className = 'day empty'; grid.appendChild(el); }
             for (let i = 1; i <= daysInMonth; i++) {
                 const el = document.createElement('div'); el.className = 'day'; el.textContent = i;
-                
-                // タスク状態チェック
-                const tasks = getTasksForDate(i, viewMonth, viewYear); // 引数追加
+                const tasks = getTasksForDate(i, viewMonth, viewYear);
                 if (tasks.length > 0) {
                     const dateStr = `${viewYear}-${viewMonth}-${i}`;
                     const completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length;
                     if (completedCount === tasks.length) el.classList.add('perfect'); else el.classList.add('has-pending');
                     if (tasks.some(t => t.isImportant)) el.classList.add('has-important');
                 }
-                
-                // 検索ヒット
                 if(checkSearchHit(i, viewMonth, viewYear)) el.classList.add('search-hit');
-
                 if(!isYearView && i === selectedDateObj.getDate() && viewMonth === (selectedDateObj.getMonth() + 1) && viewYear === selectedDateObj.getFullYear()) el.classList.add('active');
-                
                 el.onclick = () => { selectedDateObj = new Date(viewYear, viewMonth - 1, i); updateUI(); };
                 grid.appendChild(el);
             }
         }
 
-        // ★ 年表示モードの描画 (新規作成)
         function renderYearGrid(animationClass) {
             const grid = document.getElementById('calendarGrid');
-            grid.className = 'calendar-grid grid-year-view'; // クラス切り替え
-            void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
+            grid.className = 'calendar-grid grid-year-view'; void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
             grid.innerHTML = "";
-
             const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
             for (let m = 1; m <= 12; m++) {
-                const el = document.createElement('div');
-                el.className = 'month-cell';
-                el.textContent = monthNamesShort[m-1];
-                
-                // 今表示していた月なら強調
+                const el = document.createElement('div'); el.className = 'month-cell'; el.textContent = monthNamesShort[m-1];
                 if(m === viewMonth) el.classList.add('current-month');
-
-                // ★ 検索ヒットチェック (年表示用)
                 if (currentSearchQuery) {
-                    // その月にヒットするものがいくつあるか計算
-                    let hitCount = 0;
-                    const daysInM = new Date(viewYear, m, 0).getDate();
-                    for(let d=1; d<=daysInM; d++) {
-                        if(checkSearchHit(d, m, viewYear)) hitCount++;
-                    }
-                    if (hitCount > 0) {
-                        el.classList.add('has-search-hit');
-                        el.setAttribute('data-hit-count', hitCount); // 件数をCSSで表示
-                    }
+                    let hitCount = 0; const daysInM = new Date(viewYear, m, 0).getDate();
+                    for(let d=1; d<=daysInM; d++) { if(checkSearchHit(d, m, viewYear)) hitCount++; }
+                    if (hitCount > 0) { el.classList.add('has-search-hit'); el.setAttribute('data-hit-count', hitCount); }
                 }
-
-                el.onclick = () => selectMonth(m);
-                grid.appendChild(el);
+                el.onclick = () => selectMonth(m); grid.appendChild(el);
             }
         }
 
-        /* --- Search Logic Update --- */
+        /* --- Search Logic --- */
         function handleSearch() {
             const input = document.getElementById('searchInput');
             currentSearchQuery = input.value.trim().toLowerCase();
-            updateUI(); // 全体更新
+            updateUI();
         }
-
         function updateSearchCount() {
             const msg = document.getElementById('searchResultMsg');
             if (!currentSearchQuery) { msg.textContent = ""; return; }
-            
-            // 年表示なら「今年のヒット数」、月表示なら「今月のヒット数」
             let totalHits = 0;
             if (isYearView) {
-                // 全月の合計
-                for(let m=1; m<=12; m++) {
-                    const daysInM = new Date(viewYear, m, 0).getDate();
-                    for(let d=1; d<=daysInM; d++) { if(checkSearchHit(d, m, viewYear)) totalHits++; }
-                }
+                for(let m=1; m<=12; m++) { const daysInM = new Date(viewYear, m, 0).getDate(); for(let d=1; d<=daysInM; d++) { if(checkSearchHit(d, m, viewYear)) totalHits++; } }
                 msg.textContent = `${totalHits} matches in ${viewYear}`;
             } else {
-                const daysInM = new Date(viewYear, viewMonth, 0).getDate();
-                for(let d=1; d<=daysInM; d++) { if(checkSearchHit(d, viewMonth, viewYear)) totalHits++; }
+                const daysInM = new Date(viewYear, viewMonth, 0).getDate(); for(let d=1; d<=daysInM; d++) { if(checkSearchHit(d, viewMonth, viewYear)) totalHits++; }
                 msg.textContent = `${totalHits} matches in this month`;
             }
         }
-
-        // 引数を拡張して汎用化
         function checkSearchHit(day, month, year) {
             if (!currentSearchQuery) return false;
             const query = currentSearchQuery;
-            
             const tasks = getTasksForDate(day, month, year);
             const taskHit = tasks.some(t => t.text.toLowerCase().includes(query));
-            
             const dateStr = `${year}-${month}-${day}`;
             const journalText = diaryEntries[dateStr] || "";
             const journalHit = journalText.toLowerCase().includes(query);
             
-            return taskHit || journalHit;
-        }
+            // ★ 食事ログも検索対象に追加
+            const meals = mealEntries[dateStr] || { b: "", l: "", d: "" };
+            const mealHit = (meals.b + meals.l + meals.d).toLowerCase().includes(query);
 
-        /* --- Helper Logic --- */
-        // 引数で年月を指定できるように修正
-        function getTasksForDate(day, month, year) {
-            const targetDateObj = new Date(year, month - 1, day); 
-            const weekday = targetDateObj.getDay();
-            return taskDefinitions.filter(task => {
-                if (task.type === 'daily') return true;
-                if (task.type === 'weekly') return task.targetWeekday === weekday;
-                if (task.type === 'monthly') return task.targetDayOfMonth === day;
-                if (task.type === 'google' || task.type === 'oneoff') { 
-                    const tYear = task.targetYear || viewYear; 
-                    const tMonth = task.targetMonth || viewMonth; 
-                    return task.targetDate === day && tYear === year && tMonth === month; 
-                }
-                return false;
-            });
+            return taskHit || journalHit || mealHit;
         }
-
         function highlightText(text) {
             if (!currentSearchQuery) return text;
             const regex = new RegExp(`(${escapeRegExp(currentSearchQuery)})`, 'gi');
             return text.replace(regex, '<mark>$1</mark>');
         }
         function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-        function getDateString(dateObj) { const y = dateObj.getFullYear(); const m = dateObj.getMonth() + 1; const d = dateObj.getDate(); return `${y}-${m}-${d}`; }
 
-        /* --- Swipe Logic --- */
-        const swipeArea = document.getElementById('swipeArea');
-        let touchStartX = 0; let touchEndX = 0;
-        swipeArea.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-        swipeArea.addEventListener('touchend', function(e) { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, {passive: true});
-        function handleSwipe() { if (Math.abs(touchStartX - touchEndX) > 50) { if (touchStartX - touchEndX > 0) navigateCalendar(1); else navigateCalendar(-1); } }
+        /* --- Handlers --- */
+        // ★ 食事入力ハンドラ
+        function handleMealInput() {
+            const b = document.getElementById('mealBreakfast').value;
+            const l = document.getElementById('mealLunch').value;
+            const d = document.getElementById('mealDinner').value;
+            const dateStr = getDateString(selectedDateObj);
+            
+            if(!mealEntries[dateStr]) mealEntries[dateStr] = {};
+            mealEntries[dateStr] = { b: b, l: l, d: d };
+            
+            saveData(); 
+            updateSearchCount(); // 検索中に入力した場合、ヒット数が変わるかも
+        }
 
-        /* --- Reset & Import/Export (Same as before) --- */
-        function resetApp() { if(confirm("【警告】データを全削除しますか？")) { localStorage.removeItem('gemTask_definitions'); localStorage.removeItem('gemTask_logs'); localStorage.removeItem('gemTask_diary'); initDefaultData(); resetToToday(); alert("初期化しました🌱"); } }
+        /* --- Existing Handlers (Reset, Import, Export, Task, Diary) --- */
+        function resetApp() { if(confirm("【警告】データを全削除しますか？")) { localStorage.removeItem('gemTask_definitions'); localStorage.removeItem('gemTask_logs'); localStorage.removeItem('gemTask_diary'); localStorage.removeItem('gemTask_meals'); initDefaultData(); resetToToday(); alert("初期化しました🌱"); } }
         function importIcal(input) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -577,7 +503,7 @@
             return events;
         }
         function exportData() {
-            const data = { definitions: taskDefinitions, logs: completionLog, diary: diaryEntries };
+            const data = { definitions: taskDefinitions, logs: completionLog, diary: diaryEntries, meals: mealEntries };
             const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `gemtask_backup_${getDateString(selectedDateObj)}.json`; a.click(); URL.revokeObjectURL(url);
@@ -591,13 +517,24 @@
                     if(data.definitions) taskDefinitions = data.definitions;
                     if(data.logs) completionLog = data.logs;
                     if(data.diary) diaryEntries = data.diary;
+                    if(data.meals) mealEntries = data.meals;
                     saveData(); resetToToday(); alert("復元しました✨");
                 } catch (err) { alert("読込エラー"); }
             };
             reader.readAsText(file); input.value = '';
         }
         
-        // --- Task Handling ---
+        function getDateString(dateObj) { const y = dateObj.getFullYear(); const m = dateObj.getMonth() + 1; const d = dateObj.getDate(); return `${y}-${m}-${d}`; }
+        function getTasksForDate(day, month, year) {
+            const targetDateObj = new Date(year, month - 1, day); const weekday = targetDateObj.getDay();
+            return taskDefinitions.filter(task => {
+                if (task.type === 'daily') return true;
+                if (task.type === 'weekly') return task.targetWeekday === weekday;
+                if (task.type === 'monthly') return task.targetDayOfMonth === day;
+                if (task.type === 'google' || task.type === 'oneoff') { const tYear = task.targetYear || viewYear; const tMonth = task.targetMonth || viewMonth; return task.targetDate === day && tYear === year && tMonth === month; }
+                return false;
+            });
+        }
         function renderTasks() {
             const list = document.getElementById('todoList'); const progressDisplay = document.getElementById('progressDisplay'); list.innerHTML = "";
             const day = selectedDateObj.getDate(); const dateStr = getDateString(selectedDateObj); const tasks = getTasksForDate(day, viewMonth, viewYear);
@@ -618,10 +555,7 @@
                 const displayText = highlightText(task.text);
                 li.innerHTML = `
                     <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTask(${task.id})">
-                    <div class="todo-content">
-                        <span>${displayText}</span>
-                        <div class="action-buttons"><span class="badge ${badgeHtml}">${badgeText}</span><button class="star-btn ${starClass}" onclick="toggleImportance(${task.id})">${starIcon}</button><button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button></div>
-                    </div>`;
+                    <div class="todo-content"><span>${displayText}</span><div class="action-buttons"><span class="badge ${badgeHtml}">${badgeText}</span><button class="star-btn ${starClass}" onclick="toggleImportance(${task.id})">${starIcon}</button><button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button></div></div>`;
                 list.appendChild(li);
             });
         }
@@ -631,11 +565,7 @@
             const newTask = { id: Date.now(), text: text, type: typeSelect.value, targetDate: typeSelect.value === 'oneoff' ? selectedDateObj.getDate() : null, targetYear: typeSelect.value === 'oneoff' ? viewYear : null, targetMonth: typeSelect.value === 'oneoff' ? viewMonth : null, targetWeekday: typeSelect.value === 'weekly' ? selectedDateObj.getDay() : null, targetDayOfMonth: typeSelect.value === 'monthly' ? selectedDateObj.getDate() : null, isImportant: importantCheck.checked };
             taskDefinitions.push(newTask); saveData(); input.value = ""; importantCheck.checked = false; updateUI();
         }
-        function toggleTask(id) {
-            const dateStr = getDateString(selectedDateObj); const existingIndex = completionLog.findIndex(log => log.taskId === id && log.dateStr === dateStr);
-            if (existingIndex !== -1) completionLog.splice(existingIndex, 1); else completionLog.push({ taskId: id, dateStr: dateStr });
-            saveData(); updateUI();
-        }
+        function toggleTask(id) { const dateStr = getDateString(selectedDateObj); const existingIndex = completionLog.findIndex(log => log.taskId === id && log.dateStr === dateStr); if (existingIndex !== -1) completionLog.splice(existingIndex, 1); else completionLog.push({ taskId: id, dateStr: dateStr }); saveData(); updateUI(); }
         function toggleImportance(id) { const task = taskDefinitions.find(t => t.id === id); if (task) { task.isImportant = !task.isImportant; saveData(); updateUI(); } }
         function deleteTask(id) { if(confirm("削除しますか？")) { taskDefinitions = taskDefinitions.filter(t => t.id !== id); completionLog = completionLog.filter(log => log.taskId !== id); saveData(); updateUI(); } }
         function handleDiaryInput() { const text = document.getElementById('journalInput').value; const dateStr = getDateString(selectedDateObj); diaryEntries[dateStr] = text; saveData(); updateSearchCount(); }
