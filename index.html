@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GemTask - Smart Input</title>
+    <title>GemTask v6.1</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     <link rel="apple-touch-icon" href="icon-512.png">
@@ -317,70 +317,42 @@
                 if (savedMeals) mealEntries = JSON.parse(savedMeals);
                 
                 if (!savedDefs && !savedLogs && !savedDiary) initDefaultData();
-                
-                // ★ 読み込み後にサジェストリストを更新
                 updateSuggestions();
-                
             } catch (e) { initDefaultData(); }
         }
-        
         function initDefaultData() {
             taskDefinitions = []; completionLog = []; diaryEntries = {}; mealEntries = {};
             taskDefinitions.push({ id: 1, text: "GemTaskへようこそ", type: "oneoff", targetDate: today.getDate(), targetYear: today.getFullYear(), targetMonth: today.getMonth()+1, isImportant: true });
             saveData();
         }
-
         function saveData() {
             try {
                 localStorage.setItem('gemTask_definitions', JSON.stringify(taskDefinitions));
                 localStorage.setItem('gemTask_logs', JSON.stringify(completionLog));
                 localStorage.setItem('gemTask_diary', JSON.stringify(diaryEntries));
                 localStorage.setItem('gemTask_meals', JSON.stringify(mealEntries));
-                
-                // ★ 保存時にもサジェストリストを更新（新しい入力があったかも）
                 updateSuggestions();
             } catch (e) {}
         }
 
-        /* --- ★ Suggestion Logic --- */
         function updateSuggestions() {
-            // 1. タスクの候補を作成
-            // Setを使って重複を除去
             const taskSet = new Set(taskDefinitions.map(t => t.text));
             const taskListEl = document.getElementById('task-suggestions');
             taskListEl.innerHTML = '';
-            
-            // 最新のものから出したい場合もあるけど、Setは順序保持しないので単純に追加
-            taskSet.forEach(text => {
-                if(text) {
-                    const opt = document.createElement('option');
-                    opt.value = text;
-                    taskListEl.appendChild(opt);
-                }
-            });
+            taskSet.forEach(text => { if(text) { const opt = document.createElement('option'); opt.value = text; taskListEl.appendChild(opt); } });
 
-            // 2. 食事の候補を作成
             const mealSet = new Set();
-            Object.values(mealEntries).forEach(meal => {
-                if(meal.b) mealSet.add(meal.b);
-                if(meal.l) mealSet.add(meal.l);
-                if(meal.d) mealSet.add(meal.d);
-            });
+            Object.values(mealEntries).forEach(meal => { if(meal.b) mealSet.add(meal.b); if(meal.l) mealSet.add(meal.l); if(meal.d) mealSet.add(meal.d); });
             const mealListEl = document.getElementById('meal-suggestions');
             mealListEl.innerHTML = '';
-            
-            mealSet.forEach(text => {
-                if(text) {
-                    const opt = document.createElement('option');
-                    opt.value = text;
-                    mealListEl.appendChild(opt);
-                }
-            });
+            mealSet.forEach(text => { if(text) { const opt = document.createElement('option'); opt.value = text; mealListEl.appendChild(opt); } });
         }
 
         /* --- View Control --- */
         function toggleViewMode() { isYearView = !isYearView; updateUI('anim-fade'); }
         function selectMonth(m) { viewMonth = m; isYearView = false; selectedDateObj = new Date(viewYear, viewMonth - 1, 1); updateUI('anim-fade'); }
+        
+        // ★ 共通ナビゲーション関数
         function navigateCalendar(offset) {
             if (isYearView) { viewYear += offset; } 
             else { viewMonth += offset; if (viewMonth > 12) { viewMonth = 1; viewYear++; } else if (viewMonth < 1) { viewMonth = 12; viewYear--; } selectedDateObj = new Date(viewYear, viewMonth - 1, 1); }
@@ -561,7 +533,7 @@
                 if (task.type === 'daily') return true;
                 if (task.type === 'weekly') return task.targetWeekday === weekday;
                 if (task.type === 'monthly') return task.targetDayOfMonth === day;
-                if (task.type === 'google' || task.type === 'oneoff') { const tYear = task.targetYear || viewYear; const tMonth = task.targetMonth || viewMonth; return task.targetDate === day && tYear === year && tMonth === month; }
+                if (task.type === 'google' || task.type === 'oneoff') { const tYear = task.targetYear || viewYear; const tMonth = task.targetMonth || viewMonth; return task.targetDate === day && tYear === viewYear && tMonth === viewMonth; }
                 return false;
             });
         }
@@ -599,6 +571,19 @@
         function toggleImportance(id) { const task = taskDefinitions.find(t => t.id === id); if (task) { task.isImportant = !task.isImportant; saveData(); updateUI(); } }
         function deleteTask(id) { if(confirm("削除しますか？")) { taskDefinitions = taskDefinitions.filter(t => t.id !== id); completionLog = completionLog.filter(log => log.taskId !== id); saveData(); updateUI(); } }
         function handleDiaryInput() { const text = document.getElementById('journalInput').value; const dateStr = getDateString(selectedDateObj); diaryEntries[dateStr] = text; saveData(); updateSearchCount(); }
+
+        /* --- ★ 修正版 Swipe Logic --- */
+        const swipeArea = document.getElementById('swipeArea');
+        let touchStartX = 0; let touchEndX = 0;
+        swipeArea.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+        swipeArea.addEventListener('touchend', function(e) { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, {passive: true});
+        
+        function handleSwipe() { 
+            if (Math.abs(touchStartX - touchEndX) > 50) { 
+                if (touchStartX - touchEndX > 0) navigateCalendar(1); // 次へ (navigateCalendarに変更)
+                else navigateCalendar(-1); // 前へ
+            } 
+        }
 
         window.onload = () => { loadData(); updateUI('anim-fade'); };
     </script>
