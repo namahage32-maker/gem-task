@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GemTask v6.3</title>
+    <title>GemTask v6.4</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     <link rel="apple-touch-icon" href="icon-512.png">
@@ -139,7 +139,7 @@
         .date-header { font-size: 2em; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         .progress-display { font-size: 0.5em; background-color: #F0EBE0; padding: 5px 15px; border-radius: 20px; color: var(--text-color); font-weight: normal; white-space: nowrap; }
         .divider { border-bottom: 2px dashed var(--accent-color); margin-bottom: 20px; }
-        .section-title { color: #8C8480; margin-bottom: 10px; font-weight: bold; }
+        .section-title { color: #8C8480; font-weight: bold; } /* マージン調整 */
         .input-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .todo-input { flex-grow: 1; padding: 12px; border: 1px solid var(--accent-color); border-radius: 10px; font-family: inherit; outline: none; background-color: #FAFAFA; min-width: 200px; font-size: 16px; }
         .type-select { padding: 10px; border: 1px solid var(--accent-color); border-radius: 10px; font-family: inherit; background-color: #fff; color: var(--text-color); cursor: pointer; font-size: 14px; }
@@ -164,13 +164,25 @@
         .badge-monthly{ background-color: var(--tag-monthly); }
         .badge-google { background-color: var(--tag-google); color: #333; }
         
+        /* ★ 食事ログエリア */
         .meal-section { margin-top: 20px; margin-bottom: 20px; }
         
-        /* スワイプ領域としての設定 */
-        .meal-swipe-area {
-            touch-action: pan-y; /* 縦スクロールは許可 */
+        /* ★ 食事エリアヘッダー (タイトル + 日付操作) */
+        .meal-header-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
         }
+        .meal-date-ctrl {
+            display: flex; align-items: center; gap: 5px;
+            background-color: #F8F4E6; padding: 2px 5px; border-radius: 15px;
+        }
+        .meal-nav-btn {
+            background: none; border: none; cursor: pointer; color: var(--text-color);
+            font-size: 1em; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+        }
+        .meal-date-label { font-weight: bold; font-size: 0.85em; margin: 0 5px; white-space: nowrap; }
 
+        .meal-swipe-area { touch-action: pan-y; }
         .meal-row { display: flex; align-items: center; margin-bottom: 8px; }
         .meal-icon { font-size: 1.5em; width: 40px; text-align: center; margin-right: 5px; cursor: default; }
         .meal-input {
@@ -200,7 +212,7 @@
             .main-content { width: 100%; padding: 20px; box-sizing: border-box; height: auto; overflow: visible; background-color: #FFFFFF; z-index: 1; display: flex; flex-direction: column; }
             .date-header { order: 1; font-size: 1.5em; margin-top: 10px; }
             .divider { order: 2; }
-            .section-title { order: 3; }
+            .section-title { order: 3; margin-bottom: 10px; }
             .todo-list { order: 4; margin-bottom: 20px; }
             .input-group { order: 5; margin-bottom: 30px; border-top: 1px dashed #eee; padding-top: 20px; flex-direction: column; align-items: stretch;}
             .meal-section { order: 6; }
@@ -277,7 +289,15 @@
             <ul class="todo-list" id="todoList"></ul>
 
             <div class="meal-section" id="mealSwipeArea">
-                <div class="section-title">🍽️ 食事の記録</div>
+                <div class="meal-header-row">
+                    <div class="section-title" style="margin:0">🍽️ 食事の記録</div>
+                    <div class="meal-date-ctrl">
+                        <button class="meal-nav-btn" onclick="changeDay(-1)">&#10094;</button>
+                        <span class="meal-date-label" id="mealDateDisplay">--/--</span>
+                        <button class="meal-nav-btn" onclick="changeDay(1)">&#10095;</button>
+                    </div>
+                </div>
+
                 <div class="meal-swipe-area">
                     <div class="meal-row">
                         <span class="meal-icon">🍳</span>
@@ -309,7 +329,7 @@
         const today = new Date();
         let viewYear = today.getFullYear(); let viewMonth = today.getMonth() + 1; 
         
-        // ★ 日付管理は1つに戻す (連動するため)
+        // ★ 日付管理は1つ (連動)
         let selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
         let currentSearchQuery = "";
@@ -382,16 +402,11 @@
             const anim = offset > 0 ? 'anim-next' : 'anim-prev'; updateUI(anim);
         }
         
-        // ★ 新機能：日めくり用ナビゲーション（日移動）
+        // 日めくり用ナビゲーション（日移動）
         function changeDay(offset) {
-            // 現在の選択日をずらす
             selectedDateObj.setDate(selectedDateObj.getDate() + offset);
-            
-            // 月を跨いだ場合の表示更新のために viewYear / viewMonth も同期する
             viewYear = selectedDateObj.getFullYear();
             viewMonth = selectedDateObj.getMonth() + 1;
-            
-            // UI更新
             updateUI('anim-fade');
         }
 
@@ -408,7 +423,7 @@
             else {
                 renderMonthGrid(animationClass); renderTasks();
                 
-                // 日記・食事の表示更新 (selectedDateObjに連動)
+                // 日記・食事・日付表示の更新
                 const dateStr = getDateString(selectedDateObj);
                 document.getElementById('journalInput').value = diaryEntries[dateStr] || "";
                 
@@ -416,6 +431,12 @@
                 document.getElementById('mealBreakfast').value = meals.b || "";
                 document.getElementById('mealLunch').value = meals.l || "";
                 document.getElementById('mealDinner').value = meals.d || "";
+                
+                // ★ 食事欄の日付更新
+                const m = selectedDateObj.getMonth() + 1;
+                const d = selectedDateObj.getDate();
+                const dayStr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][selectedDateObj.getDay()];
+                document.getElementById('mealDateDisplay').textContent = `${m}/${d} ${dayStr}`;
             }
             updateSearchCount();
         }
@@ -424,12 +445,11 @@
             const display = document.getElementById('monthDisplay');
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             display.textContent = isYearView ? `${viewYear}` : `${monthNames[viewMonth - 1]} ${viewYear}`;
-            
             const dayOfWeekStr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][selectedDateObj.getDay()];
             document.getElementById('headerDateDisplay').textContent = `${viewMonth}/${selectedDateObj.getDate()} ${dayOfWeekStr}`;
         }
 
-        /* --- Render Grids --- */
+        /* --- Render Grids (省略せず) --- */
         function renderMonthGrid(animationClass) {
             const grid = document.getElementById('calendarGrid');
             grid.className = 'calendar-grid grid-month-view'; void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
@@ -529,25 +549,12 @@
         function importIcal(input) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const content = e.target.result; const events = parseIcal(content);
-                    if (events.length > 0) {
-                        let count = 0;
-                        events.forEach(ev => {
-                            const exists = taskDefinitions.some(t => t.text === ev.title && t.targetDate === ev.day && t.type === 'google' && t.targetYear === ev.year && t.targetMonth === ev.month);
-                            if (!exists) { taskDefinitions.push({ id: Date.now() + Math.random(), text: ev.title, type: "google", targetDate: ev.day, targetYear: ev.year, targetMonth: ev.month, targetWeekday: null, targetDayOfMonth: null, isImportant: false }); count++; }
-                        });
-                        saveData(); updateUI('anim-fade'); alert(`${count}件読み込みました📅`);
-                    } else { alert("予定なし💦"); }
-                } catch(e) { alert("読込エラー"); }
-            };
+            reader.onload = function(e) { try { const content = e.target.result; const events = parseIcal(content); if (events.length > 0) { let count = 0; events.forEach(ev => { const exists = taskDefinitions.some(t => t.text === ev.title && t.targetDate === ev.day && t.type === 'google' && t.targetYear === ev.year && t.targetMonth === ev.month); if (!exists) { taskDefinitions.push({ id: Date.now() + Math.random(), text: ev.title, type: "google", targetDate: ev.day, targetYear: ev.year, targetMonth: ev.month, targetWeekday: null, targetDayOfMonth: null, isImportant: false }); count++; } }); saveData(); updateUI('anim-fade'); alert(`${count}件読み込みました📅`); } else { alert("予定なし💦"); } } catch(e) { alert("読込エラー"); } };
             reader.readAsText(file); input.value = '';
         }
         function parseIcal(icalData) { const events = []; const lines = icalData.split(/\r\n|\n|\r/); let inEvent = false; let currentEvent = {}; lines.forEach(line => { if (line.startsWith('BEGIN:VEVENT')) { inEvent = true; currentEvent = {}; } else if (line.startsWith('END:VEVENT')) { inEvent = false; if (currentEvent.summary && currentEvent.dtstart) { const dateStr = currentEvent.dtstart; if (dateStr.length >= 8) { events.push({ title: currentEvent.summary, year: parseInt(dateStr.substring(0, 4)), month: parseInt(dateStr.substring(4, 6)), day: parseInt(dateStr.substring(6, 8)) }); } } } else if (inEvent) { if (line.startsWith('SUMMARY:')) currentEvent.summary = line.substring(8); else if (line.startsWith('DTSTART')) { const parts = line.split(':'); if (parts.length > 1) currentEvent.dtstart = parts[1]; } } }); return events; }
         function exportData() { const data = { definitions: taskDefinitions, logs: completionLog, diary: diaryEntries, meals: mealEntries }; const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `gemtask_backup_${getDateString(selectedDateObj)}.json`; a.click(); URL.revokeObjectURL(url); }
         function importData(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if(data.definitions) taskDefinitions = data.definitions; if(data.logs) completionLog = data.logs; if(data.diary) diaryEntries = data.diary; if(data.meals) mealEntries = data.meals; saveData(); resetToToday(); alert("復元しました✨"); } catch (err) { alert("読込エラー"); } }; reader.readAsText(file); input.value = ''; }
-        
         function getDateString(dateObj) { const y = dateObj.getFullYear(); const m = dateObj.getMonth() + 1; const d = dateObj.getDate(); return `${y}-${m}-${d}`; }
         function getTasksForDate(day, month, year) { const targetDateObj = new Date(year, month - 1, day); const weekday = targetDateObj.getDay(); return taskDefinitions.filter(task => { if (task.type === 'daily') return true; if (task.type === 'weekly') return task.targetWeekday === weekday; if (task.type === 'monthly') return task.targetDayOfMonth === day; if (task.type === 'google' || task.type === 'oneoff') { const tYear = task.targetYear || viewYear; const tMonth = task.targetMonth || viewMonth; return task.targetDate === day && tYear === year && tMonth === month; } return false; }); }
         function renderTasks() { const list = document.getElementById('todoList'); const progressDisplay = document.getElementById('progressDisplay'); list.innerHTML = ""; const day = selectedDateObj.getDate(); const dateStr = getDateString(selectedDateObj); const tasks = getTasksForDate(day, viewMonth, viewYear); let completedCount = 0; if (tasks.length === 0) { progressDisplay.textContent = "No Tasks"; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "#aaa"; } else { completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length; const percentage = Math.round((completedCount / tasks.length) * 100); if (percentage === 100) { progressDisplay.textContent = `100% Perfect! 🎉`; progressDisplay.style.backgroundColor = "var(--highlight)"; progressDisplay.style.color = "white"; } else { progressDisplay.textContent = `達成率: ${percentage}% (${completedCount}/${tasks.length})`; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "var(--text-color)"; } } tasks.forEach(task => { const li = document.createElement('li'); li.className = `todo-item ${task.isImportant ? 'is-important' : ''}`; const isCompleted = completionLog.some(log => log.taskId === task.id && log.dateStr === dateStr); let badgeHtml = "", badgeText = ""; if (task.type === 'daily') { badgeHtml = "badge-daily"; badgeText = "毎日"; } else if (task.type === 'weekly') { badgeHtml = "badge-weekly"; badgeText = "毎週"; } else if (task.type === 'monthly') { badgeHtml = "badge-monthly"; badgeText = "毎月"; } else if (task.type === 'google') { badgeHtml = "badge-google"; badgeText = "Google"; } else { badgeHtml = "badge-oneoff"; badgeText = "単発"; } const starClass = task.isImportant ? 'active' : 'inactive'; const starIcon = task.isImportant ? '★' : '☆'; const displayText = highlightText(task.text); li.innerHTML = `<input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTask(${task.id})"><div class="todo-content"><span>${displayText}</span><div class="action-buttons"><span class="badge ${badgeHtml}">${badgeText}</span><button class="star-btn ${starClass}" onclick="toggleImportance(${task.id})">${starIcon}</button><button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button></div></div>`; list.appendChild(li); }); }
@@ -557,14 +564,12 @@
         function deleteTask(id) { if(confirm("削除しますか？")) { taskDefinitions = taskDefinitions.filter(t => t.id !== id); completionLog = completionLog.filter(log => log.taskId !== id); saveData(); updateUI(); } }
         function handleDiaryInput() { const text = document.getElementById('journalInput').value; const dateStr = getDateString(selectedDateObj); diaryEntries[dateStr] = text; saveData(); updateSearchCount(); }
 
-        /* --- ★ Swipe Logic (Dual Handlers) --- */
-        // 1. カレンダーエリアのスワイプ -> 月移動 (navigateCalendar)
+        /* --- Swipe Logic (Dual Handlers) --- */
         const swipeArea = document.getElementById('swipeArea');
         let touchStartX = 0; let touchEndX = 0;
         swipeArea.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
         swipeArea.addEventListener('touchend', function(e) { touchEndX = e.changedTouches[0].screenX; if(Math.abs(touchStartX - touchEndX) > 50) { if(touchStartX - touchEndX > 0) navigateCalendar(1); else navigateCalendar(-1); } }, {passive: true});
 
-        // 2. 食事エリアのスワイプ -> 日移動 (changeDay)
         const mealSwipeArea = document.getElementById('mealSwipeArea');
         let mealTouchStartX = 0; let mealTouchEndX = 0;
         mealSwipeArea.addEventListener('touchstart', function(e) { mealTouchStartX = e.changedTouches[0].screenX; }, {passive: true});
