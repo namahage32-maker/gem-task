@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GemTask v6.4</title>
+    <title>GemTask - ToDo & Habit</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     <link rel="apple-touch-icon" href="icon-512.png">
@@ -32,6 +32,7 @@
             --tag-weekly: #F6D365;
             --tag-monthly: #A0C1B8;
             --tag-google: #AECBFA;
+            --tag-todo: #90A4AE; /* 常駐タスク用の色 */
         }
 
         *, *::before, *::after { box-sizing: border-box; }
@@ -139,13 +140,14 @@
         .date-header { font-size: 2em; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         .progress-display { font-size: 0.5em; background-color: #F0EBE0; padding: 5px 15px; border-radius: 20px; color: var(--text-color); font-weight: normal; white-space: nowrap; }
         .divider { border-bottom: 2px dashed var(--accent-color); margin-bottom: 20px; }
-        .section-title { color: #8C8480; font-weight: bold; } /* マージン調整 */
+        .section-title { color: #8C8480; font-weight: bold; }
         .input-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .todo-input { flex-grow: 1; padding: 12px; border: 1px solid var(--accent-color); border-radius: 10px; font-family: inherit; outline: none; background-color: #FAFAFA; min-width: 200px; font-size: 16px; }
         .type-select { padding: 10px; border: 1px solid var(--accent-color); border-radius: 10px; font-family: inherit; background-color: #fff; color: var(--text-color); cursor: pointer; font-size: 14px; }
         .important-label { display: flex; align-items: center; gap: 5px; color: var(--important-color); font-weight: bold; cursor: pointer; font-size: 0.9em; background: #fff; padding: 8px 12px; border-radius: 10px; border: 1px solid #FFE4E4; }
         .important-label input { transform: scale(1.3); accent-color: var(--important-color); margin: 0; }
         .add-btn { background:var(--accent-color); color:#fff; border:none; border-radius:10px; padding:12px 25px; cursor:pointer; font-weight:bold; }
+        
         .todo-list { list-style: none; padding: 0; margin-bottom: 30px; }
         .todo-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; animation: fadeIn 0.3s ease; padding-left: 5px; min-height: 40px; }
         .todo-item.is-important { background-color: #FFF5F5; border-left: 4px solid var(--important-color); border-radius: 0 5px 5px 0; }
@@ -163,25 +165,28 @@
         .badge-weekly { background-color: var(--tag-weekly); }
         .badge-monthly{ background-color: var(--tag-monthly); }
         .badge-google { background-color: var(--tag-google); color: #333; }
-        
-        /* ★ 食事ログエリア */
-        .meal-section { margin-top: 20px; margin-bottom: 20px; }
-        
-        /* ★ 食事エリアヘッダー (タイトル + 日付操作) */
-        .meal-header-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 10px;
-        }
-        .meal-date-ctrl {
-            display: flex; align-items: center; gap: 5px;
-            background-color: #F8F4E6; padding: 2px 5px; border-radius: 15px;
-        }
-        .meal-nav-btn {
-            background: none; border: none; cursor: pointer; color: var(--text-color);
-            font-size: 1em; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-        }
-        .meal-date-label { font-weight: bold; font-size: 0.85em; margin: 0 5px; white-space: nowrap; }
+        .badge-todo { background-color: var(--tag-todo); } /* 常駐用 */
 
+        /* ★ 常駐タスクエリア */
+        .persistent-section {
+            background-color: #F0F4F8; /* 少し違う背景色 */
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #DCE6F1;
+        }
+        .persistent-title {
+            font-size: 0.9em; color: #607D8B; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;
+        }
+        .persistent-list { list-style: none; padding: 0; margin: 0; }
+        .persistent-list .todo-item { border-bottom: 1px solid #E0E7EF; background: #fff; margin-bottom: 5px; border-radius: 8px; padding: 8px 10px; }
+        .persistent-list .todo-item:last-child { margin-bottom: 0; }
+
+        .meal-section { margin-top: 20px; margin-bottom: 20px; }
+        .meal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .meal-date-ctrl { display: flex; align-items: center; gap: 5px; background-color: #F8F4E6; padding: 2px 5px; border-radius: 15px; }
+        .meal-nav-btn { background: none; border: none; cursor: pointer; color: var(--text-color); font-size: 1em; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+        .meal-date-label { font-weight: bold; font-size: 0.85em; margin: 0 5px; white-space: nowrap; }
         .meal-swipe-area { touch-action: pan-y; }
         .meal-row { display: flex; align-items: center; margin-bottom: 8px; }
         .meal-icon { font-size: 1.5em; width: 40px; text-align: center; margin-right: 5px; cursor: default; }
@@ -212,11 +217,15 @@
             .main-content { width: 100%; padding: 20px; box-sizing: border-box; height: auto; overflow: visible; background-color: #FFFFFF; z-index: 1; display: flex; flex-direction: column; }
             .date-header { order: 1; font-size: 1.5em; margin-top: 10px; }
             .divider { order: 2; }
+            
+            /* Order調整: 常駐リストをタイトルの下、入力欄の上へ */
             .section-title { order: 3; margin-bottom: 10px; }
-            .todo-list { order: 4; margin-bottom: 20px; }
-            .input-group { order: 5; margin-bottom: 30px; border-top: 1px dashed #eee; padding-top: 20px; flex-direction: column; align-items: stretch;}
-            .meal-section { order: 6; }
-            .journal-section { order: 7; }
+            .persistent-section { order: 4; }
+            .todo-list { order: 5; margin-bottom: 20px; } /* 日課リスト */
+            
+            .input-group { order: 6; margin-bottom: 30px; border-top: 1px dashed #eee; padding-top: 20px; flex-direction: column; align-items: stretch;}
+            .meal-section { order: 7; }
+            .journal-section { order: 8; }
             .todo-input { width: 100%; margin-bottom: 10px; }
             .add-btn { width: 100%; margin-top: 10px; }
             .type-select, .important-label { width: 100%; box-sizing: border-box; justify-content: center; margin-bottom: 10px;}
@@ -270,12 +279,19 @@
 
             <div class="section-title">🌿 タスクリスト</div>
             
+            <div class="persistent-section" id="persistentSection" style="display:none;">
+                <div class="persistent-title">🔥 未完了のToDo</div>
+                <ul class="persistent-list" id="persistentList"></ul>
+            </div>
+
+            <ul class="todo-list" id="todoList"></ul>
+
             <div class="input-group">
                 <input type="text" class="todo-input" id="taskInput" placeholder="新しいタスク..." list="task-suggestions">
                 <div style="display:flex; gap:10px; width:100%;">
                     <select id="taskType" class="type-select" style="flex:1">
                         <option value="oneoff">📅 単発</option>
-                        <option value="daily">🔁 毎日</option>
+                        <option value="todo">♾️ ToDo</option> <option value="daily">🔁 毎日</option>
                         <option value="weekly">📅 毎週</option>
                         <option value="monthly">🌙 毎月</option>
                     </select>
@@ -286,8 +302,6 @@
                 <button class="add-btn" onclick="handleAddTask()">追加</button>
             </div>
 
-            <ul class="todo-list" id="todoList"></ul>
-
             <div class="meal-section" id="mealSwipeArea">
                 <div class="meal-header-row">
                     <div class="section-title" style="margin:0">🍽️ 食事の記録</div>
@@ -297,7 +311,6 @@
                         <button class="meal-nav-btn" onclick="changeDay(1)">&#10095;</button>
                     </div>
                 </div>
-
                 <div class="meal-swipe-area">
                     <div class="meal-row">
                         <span class="meal-icon">🍳</span>
@@ -328,10 +341,7 @@
         let taskDefinitions = []; let completionLog = []; let diaryEntries = {}; let mealEntries = {}; 
         const today = new Date();
         let viewYear = today.getFullYear(); let viewMonth = today.getMonth() + 1; 
-        
-        // ★ 日付管理は1つ (連動)
         let selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
         let currentSearchQuery = "";
         let isYearView = false;
 
@@ -381,49 +391,19 @@
             mealSet.forEach(text => { if(text) { const opt = document.createElement('option'); opt.value = text; mealListEl.appendChild(opt); } });
         }
 
-        /* --- Navigation & Date Logic --- */
         function toggleViewMode() { isYearView = !isYearView; updateUI('anim-fade'); }
-        
-        function selectMonth(m) { 
-            viewMonth = m; isYearView = false; 
-            selectedDateObj = new Date(viewYear, viewMonth - 1, 1);
-            updateUI('anim-fade'); 
-        }
-        
-        // カレンダー用のナビゲーション（月移動）
-        function navigateCalendar(offset) {
-            if (isYearView) { viewYear += offset; } 
-            else { 
-                viewMonth += offset; 
-                if (viewMonth > 12) { viewMonth = 1; viewYear++; } 
-                else if (viewMonth < 1) { viewMonth = 12; viewYear--; } 
-                selectedDateObj = new Date(viewYear, viewMonth - 1, 1);
-            }
-            const anim = offset > 0 ? 'anim-next' : 'anim-prev'; updateUI(anim);
-        }
-        
-        // 日めくり用ナビゲーション（日移動）
-        function changeDay(offset) {
-            selectedDateObj.setDate(selectedDateObj.getDate() + offset);
-            viewYear = selectedDateObj.getFullYear();
-            viewMonth = selectedDateObj.getMonth() + 1;
-            updateUI('anim-fade');
-        }
+        function selectMonth(m) { viewMonth = m; isYearView = false; selectedDateObj = new Date(viewYear, viewMonth - 1, 1); updateUI('anim-fade'); }
+        function navigateCalendar(offset) { if (isYearView) { viewYear += offset; } else { viewMonth += offset; if (viewMonth > 12) { viewMonth = 1; viewYear++; } else if (viewMonth < 1) { viewMonth = 12; viewYear--; } selectedDateObj = new Date(viewYear, viewMonth - 1, 1); } const anim = offset > 0 ? 'anim-next' : 'anim-prev'; updateUI(anim); }
+        function changeDay(offset) { selectedDateObj.setDate(selectedDateObj.getDate() + offset); viewYear = selectedDateObj.getFullYear(); viewMonth = selectedDateObj.getMonth() + 1; updateUI('anim-fade'); }
+        function resetToToday() { viewYear = today.getFullYear(); viewMonth = today.getMonth() + 1; selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate()); isYearView = false; updateUI('anim-fade'); }
 
-        function resetToToday() { 
-            viewYear = today.getFullYear(); viewMonth = today.getMonth() + 1; 
-            selectedDateObj = new Date(today.getFullYear(), today.getMonth(), today.getDate()); 
-            isYearView = false; updateUI('anim-fade'); 
-        }
-
-        /* --- UI Update --- */
         function updateUI(animationClass = '') {
             renderCalendarHeader();
             if (isYearView) { renderYearGrid(animationClass); } 
             else {
-                renderMonthGrid(animationClass); renderTasks();
+                renderMonthGrid(animationClass);
+                renderTasks(); // ★ ここで通常タスクと常駐ToDoの両方を描画
                 
-                // 日記・食事・日付表示の更新
                 const dateStr = getDateString(selectedDateObj);
                 document.getElementById('journalInput').value = diaryEntries[dateStr] || "";
                 
@@ -432,9 +412,7 @@
                 document.getElementById('mealLunch').value = meals.l || "";
                 document.getElementById('mealDinner').value = meals.d || "";
                 
-                // ★ 食事欄の日付更新
-                const m = selectedDateObj.getMonth() + 1;
-                const d = selectedDateObj.getDate();
+                const m = selectedDateObj.getMonth() + 1; const d = selectedDateObj.getDate();
                 const dayStr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][selectedDateObj.getDay()];
                 document.getElementById('mealDateDisplay').textContent = `${m}/${d} ${dayStr}`;
             }
@@ -449,7 +427,6 @@
             document.getElementById('headerDateDisplay').textContent = `${viewMonth}/${selectedDateObj.getDate()} ${dayOfWeekStr}`;
         }
 
-        /* --- Render Grids (省略せず) --- */
         function renderMonthGrid(animationClass) {
             const grid = document.getElementById('calendarGrid');
             grid.className = 'calendar-grid grid-month-view'; void grid.offsetWidth; if(animationClass) grid.classList.add(animationClass);
@@ -460,7 +437,8 @@
             for (let i = 0; i < firstDay; i++) { const el = document.createElement('div'); el.className = 'day empty'; grid.appendChild(el); }
             for (let i = 1; i <= daysInMonth; i++) {
                 const el = document.createElement('div'); el.className = 'day'; el.textContent = i;
-                const tasks = getTasksForDate(i, viewMonth, viewYear);
+                const tasks = getTasksForDate(i, viewMonth, viewYear); // 既存タスク取得
+                // 日付セルには「ToDo」はカウントしない（ToDoは日付に紐付かないため）
                 if (tasks.length > 0) {
                     const dateStr = `${viewYear}-${viewMonth}-${i}`;
                     const completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length;
@@ -469,11 +447,7 @@
                 }
                 if(checkSearchHit(i, viewMonth, viewYear)) el.classList.add('search-hit');
                 if(!isYearView && i === selectedDateObj.getDate() && viewMonth === (selectedDateObj.getMonth() + 1) && viewYear === selectedDateObj.getFullYear()) el.classList.add('active');
-                
-                el.onclick = () => { 
-                    selectedDateObj = new Date(viewYear, viewMonth - 1, i);
-                    updateUI(); 
-                };
+                el.onclick = () => { selectedDateObj = new Date(viewYear, viewMonth - 1, i); updateUI(); };
                 grid.appendChild(el);
             }
         }
@@ -495,12 +469,7 @@
             }
         }
 
-        /* --- Search Logic --- */
-        function handleSearch() {
-            const input = document.getElementById('searchInput');
-            currentSearchQuery = input.value.trim().toLowerCase();
-            updateUI();
-        }
+        function handleSearch() { const input = document.getElementById('searchInput'); currentSearchQuery = input.value.trim().toLowerCase(); updateUI(); }
         function updateSearchCount() {
             const msg = document.getElementById('searchResultMsg');
             if (!currentSearchQuery) { msg.textContent = ""; return; }
@@ -525,46 +494,123 @@
             const mealHit = (meals.b + meals.l + meals.d).toLowerCase().includes(query);
             return taskHit || journalHit || mealHit;
         }
-        function highlightText(text) {
-            if (!currentSearchQuery) return text;
-            const regex = new RegExp(`(${escapeRegExp(currentSearchQuery)})`, 'gi');
-            return text.replace(regex, '<mark>$1</mark>');
-        }
+        function highlightText(text) { if (!currentSearchQuery) return text; const regex = new RegExp(`(${escapeRegExp(currentSearchQuery)})`, 'gi'); return text.replace(regex, '<mark>$1</mark>'); }
         function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-        /* --- Handlers --- */
-        function handleMealInput() {
-            const b = document.getElementById('mealBreakfast').value;
-            const l = document.getElementById('mealLunch').value;
-            const d = document.getElementById('mealDinner').value;
-            const dateStr = getDateString(selectedDateObj);
-            
-            if(!mealEntries[dateStr]) mealEntries[dateStr] = {};
-            mealEntries[dateStr] = { b: b, l: l, d: d };
-            
-            saveData(); updateSearchCount();
-        }
-
+        function handleMealInput() { const b = document.getElementById('mealBreakfast').value; const l = document.getElementById('mealLunch').value; const d = document.getElementById('mealDinner').value; const dateStr = getDateString(selectedDateObj); if(!mealEntries[dateStr]) mealEntries[dateStr] = {}; mealEntries[dateStr] = { b: b, l: l, d: d }; saveData(); updateSearchCount(); }
+        
         function resetApp() { if(confirm("【警告】データを全削除しますか？")) { localStorage.removeItem('gemTask_definitions'); localStorage.removeItem('gemTask_logs'); localStorage.removeItem('gemTask_diary'); localStorage.removeItem('gemTask_meals'); initDefaultData(); resetToToday(); alert("初期化しました🌱"); } }
-        function importIcal(input) {
-            const file = input.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) { try { const content = e.target.result; const events = parseIcal(content); if (events.length > 0) { let count = 0; events.forEach(ev => { const exists = taskDefinitions.some(t => t.text === ev.title && t.targetDate === ev.day && t.type === 'google' && t.targetYear === ev.year && t.targetMonth === ev.month); if (!exists) { taskDefinitions.push({ id: Date.now() + Math.random(), text: ev.title, type: "google", targetDate: ev.day, targetYear: ev.year, targetMonth: ev.month, targetWeekday: null, targetDayOfMonth: null, isImportant: false }); count++; } }); saveData(); updateUI('anim-fade'); alert(`${count}件読み込みました📅`); } else { alert("予定なし💦"); } } catch(e) { alert("読込エラー"); } };
-            reader.readAsText(file); input.value = '';
-        }
+        function importIcal(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const content = e.target.result; const events = parseIcal(content); if (events.length > 0) { let count = 0; events.forEach(ev => { const exists = taskDefinitions.some(t => t.text === ev.title && t.targetDate === ev.day && t.type === 'google' && t.targetYear === ev.year && t.targetMonth === ev.month); if (!exists) { taskDefinitions.push({ id: Date.now() + Math.random(), text: ev.title, type: "google", targetDate: ev.day, targetYear: ev.year, targetMonth: ev.month, targetWeekday: null, targetDayOfMonth: null, isImportant: false }); count++; } }); saveData(); updateUI('anim-fade'); alert(`${count}件読み込みました📅`); } else { alert("予定なし💦"); } } catch(e) { alert("読込エラー"); } }; reader.readAsText(file); input.value = ''; }
         function parseIcal(icalData) { const events = []; const lines = icalData.split(/\r\n|\n|\r/); let inEvent = false; let currentEvent = {}; lines.forEach(line => { if (line.startsWith('BEGIN:VEVENT')) { inEvent = true; currentEvent = {}; } else if (line.startsWith('END:VEVENT')) { inEvent = false; if (currentEvent.summary && currentEvent.dtstart) { const dateStr = currentEvent.dtstart; if (dateStr.length >= 8) { events.push({ title: currentEvent.summary, year: parseInt(dateStr.substring(0, 4)), month: parseInt(dateStr.substring(4, 6)), day: parseInt(dateStr.substring(6, 8)) }); } } } else if (inEvent) { if (line.startsWith('SUMMARY:')) currentEvent.summary = line.substring(8); else if (line.startsWith('DTSTART')) { const parts = line.split(':'); if (parts.length > 1) currentEvent.dtstart = parts[1]; } } }); return events; }
         function exportData() { const data = { definitions: taskDefinitions, logs: completionLog, diary: diaryEntries, meals: mealEntries }; const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `gemtask_backup_${getDateString(selectedDateObj)}.json`; a.click(); URL.revokeObjectURL(url); }
         function importData(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if(data.definitions) taskDefinitions = data.definitions; if(data.logs) completionLog = data.logs; if(data.diary) diaryEntries = data.diary; if(data.meals) mealEntries = data.meals; saveData(); resetToToday(); alert("復元しました✨"); } catch (err) { alert("読込エラー"); } }; reader.readAsText(file); input.value = ''; }
         function getDateString(dateObj) { const y = dateObj.getFullYear(); const m = dateObj.getMonth() + 1; const d = dateObj.getDate(); return `${y}-${m}-${d}`; }
-        function getTasksForDate(day, month, year) { const targetDateObj = new Date(year, month - 1, day); const weekday = targetDateObj.getDay(); return taskDefinitions.filter(task => { if (task.type === 'daily') return true; if (task.type === 'weekly') return task.targetWeekday === weekday; if (task.type === 'monthly') return task.targetDayOfMonth === day; if (task.type === 'google' || task.type === 'oneoff') { const tYear = task.targetYear || viewYear; const tMonth = task.targetMonth || viewMonth; return task.targetDate === day && tYear === year && tMonth === month; } return false; }); }
-        function renderTasks() { const list = document.getElementById('todoList'); const progressDisplay = document.getElementById('progressDisplay'); list.innerHTML = ""; const day = selectedDateObj.getDate(); const dateStr = getDateString(selectedDateObj); const tasks = getTasksForDate(day, viewMonth, viewYear); let completedCount = 0; if (tasks.length === 0) { progressDisplay.textContent = "No Tasks"; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "#aaa"; } else { completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length; const percentage = Math.round((completedCount / tasks.length) * 100); if (percentage === 100) { progressDisplay.textContent = `100% Perfect! 🎉`; progressDisplay.style.backgroundColor = "var(--highlight)"; progressDisplay.style.color = "white"; } else { progressDisplay.textContent = `達成率: ${percentage}% (${completedCount}/${tasks.length})`; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "var(--text-color)"; } } tasks.forEach(task => { const li = document.createElement('li'); li.className = `todo-item ${task.isImportant ? 'is-important' : ''}`; const isCompleted = completionLog.some(log => log.taskId === task.id && log.dateStr === dateStr); let badgeHtml = "", badgeText = ""; if (task.type === 'daily') { badgeHtml = "badge-daily"; badgeText = "毎日"; } else if (task.type === 'weekly') { badgeHtml = "badge-weekly"; badgeText = "毎週"; } else if (task.type === 'monthly') { badgeHtml = "badge-monthly"; badgeText = "毎月"; } else if (task.type === 'google') { badgeHtml = "badge-google"; badgeText = "Google"; } else { badgeHtml = "badge-oneoff"; badgeText = "単発"; } const starClass = task.isImportant ? 'active' : 'inactive'; const starIcon = task.isImportant ? '★' : '☆'; const displayText = highlightText(task.text); li.innerHTML = `<input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTask(${task.id})"><div class="todo-content"><span>${displayText}</span><div class="action-buttons"><span class="badge ${badgeHtml}">${badgeText}</span><button class="star-btn ${starClass}" onclick="toggleImportance(${task.id})">${starIcon}</button><button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button></div></div>`; list.appendChild(li); }); }
-        function handleAddTask() { const input = document.getElementById('taskInput'); const typeSelect = document.getElementById('taskType'); const importantCheck = document.getElementById('importantCheck'); const text = input.value.trim(); if (!text) return; const newTask = { id: Date.now(), text: text, type: typeSelect.value, targetDate: typeSelect.value === 'oneoff' ? selectedDateObj.getDate() : null, targetYear: typeSelect.value === 'oneoff' ? viewYear : null, targetMonth: typeSelect.value === 'oneoff' ? viewMonth : null, targetWeekday: typeSelect.value === 'weekly' ? selectedDateObj.getDay() : null, targetDayOfMonth: typeSelect.value === 'monthly' ? selectedDateObj.getDate() : null, isImportant: importantCheck.checked }; taskDefinitions.push(newTask); saveData(); input.value = ""; importantCheck.checked = false; updateUI(); }
+        
+        function getTasksForDate(day, month, year) { 
+            const targetDateObj = new Date(year, month - 1, day); const weekday = targetDateObj.getDay(); 
+            return taskDefinitions.filter(task => { 
+                if (task.type === 'todo') return false; // ★ ToDoは日付タスクに含めない
+                if (task.type === 'daily') return true; 
+                if (task.type === 'weekly') return task.targetWeekday === weekday; 
+                if (task.type === 'monthly') return task.targetDayOfMonth === day; 
+                if (task.type === 'google' || task.type === 'oneoff') { const tYear = task.targetYear || viewYear; const tMonth = task.targetMonth || viewMonth; return task.targetDate === day && tYear === year && tMonth === month; } 
+                return false; 
+            }); 
+        }
+
+        // ★ 常駐ToDoを取得する関数
+        function getPersistentTodos() {
+            return taskDefinitions.filter(task => {
+                // typeがtodoで、かつ完了ログが「一つも」存在しないもの
+                if (task.type !== 'todo') return false;
+                const isDone = completionLog.some(log => log.taskId === task.id);
+                return !isDone;
+            });
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('todoList'); 
+            const persistentList = document.getElementById('persistentList');
+            const persistentSection = document.getElementById('persistentSection');
+            const progressDisplay = document.getElementById('progressDisplay'); 
+            list.innerHTML = "";
+            persistentList.innerHTML = "";
+
+            const day = selectedDateObj.getDate(); 
+            const dateStr = getDateString(selectedDateObj); 
+            
+            // --- 1. 常駐ToDoの描画 ---
+            const todos = getPersistentTodos();
+            if (todos.length > 0) {
+                persistentSection.style.display = 'block';
+                todos.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = `todo-item ${task.isImportant ? 'is-important' : ''}`;
+                    const starClass = task.isImportant ? 'active' : 'inactive'; const starIcon = task.isImportant ? '★' : '☆';
+                    const displayText = highlightText(task.text);
+                    li.innerHTML = `
+                        <input type="checkbox" onchange="toggleTask(${task.id})">
+                        <div class="todo-content"><span>${displayText}</span><div class="action-buttons"><span class="badge badge-todo">ToDo</span><button class="star-btn ${starClass}" onclick="toggleImportance(${task.id})">${starIcon}</button><button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button></div></div>`;
+                    persistentList.appendChild(li);
+                });
+            } else {
+                persistentSection.style.display = 'none';
+            }
+
+            // --- 2. 今日のタスクの描画 ---
+            const tasks = getTasksForDate(day, viewMonth, viewYear);
+            let completedCount = 0;
+            
+            // 完了済みのToDoも今日のリストに表示してあげる（達成感のため）
+            const doneTodosToday = taskDefinitions.filter(t => t.type === 'todo' && completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr));
+            
+            // 表示用リスト結合
+            const displayTasks = [...tasks, ...doneTodosToday];
+
+            if (tasks.length === 0 && doneTodosToday.length === 0) { 
+                progressDisplay.textContent = "No Tasks"; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "#aaa"; 
+            } else { 
+                // 進捗計算は「今日の予定タスク」のみを対象とする（ToDoはボーナス扱い）
+                if (tasks.length > 0) {
+                    completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length;
+                    const percentage = Math.round((completedCount / tasks.length) * 100);
+                    if (percentage === 100) { progressDisplay.textContent = `100% Perfect! 🎉`; progressDisplay.style.backgroundColor = "var(--highlight)"; progressDisplay.style.color = "white"; } 
+                    else { progressDisplay.textContent = `達成率: ${percentage}% (${completedCount}/${tasks.length})`; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "var(--text-color)"; }
+                } else {
+                    progressDisplay.textContent = "Bonus Tasks ✨"; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "var(--text-color)";
+                }
+            }
+
+            displayTasks.forEach(task => {
+                const li = document.createElement('li'); 
+                li.className = `todo-item ${task.isImportant ? 'is-important' : ''}`; 
+                const isCompleted = completionLog.some(log => log.taskId === task.id && log.dateStr === dateStr); 
+                
+                let badgeHtml = "", badgeText = "";
+                if (task.type === 'daily') { badgeHtml = "badge-daily"; badgeText = "毎日"; } 
+                else if (task.type === 'weekly') { badgeHtml = "badge-weekly"; badgeText = "毎週"; } 
+                else if (task.type === 'monthly') { badgeHtml = "badge-monthly"; badgeText = "毎月"; } 
+                else if (task.type === 'google') { badgeHtml = "badge-google"; badgeText = "Google"; } 
+                else if (task.type === 'todo') { badgeHtml = "badge-todo"; badgeText = "ToDo"; } // 完了済みToDo
+                else { badgeHtml = "badge-oneoff"; badgeText = "単発"; } 
+                
+                const starClass = task.isImportant ? 'active' : 'inactive'; const starIcon = task.isImportant ? '★' : '☆'; 
+                const displayText = highlightText(task.text); 
+                li.innerHTML = `<input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTask(${task.id})"><div class="todo-content"><span>${displayText}</span><div class="action-buttons"><span class="badge ${badgeHtml}">${badgeText}</span><button class="star-btn ${starClass}" onclick="toggleImportance(${task.id})">${starIcon}</button><button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button></div></div>`; 
+                list.appendChild(li); 
+            });
+        }
+
+        function handleAddTask() { 
+            const input = document.getElementById('taskInput'); const typeSelect = document.getElementById('taskType'); const importantCheck = document.getElementById('importantCheck'); 
+            const text = input.value.trim(); if (!text) return; 
+            const newTask = { id: Date.now(), text: text, type: typeSelect.value, targetDate: typeSelect.value === 'oneoff' ? selectedDateObj.getDate() : null, targetYear: typeSelect.value === 'oneoff' ? viewYear : null, targetMonth: typeSelect.value === 'oneoff' ? viewMonth : null, targetWeekday: typeSelect.value === 'weekly' ? selectedDateObj.getDay() : null, targetDayOfMonth: typeSelect.value === 'monthly' ? selectedDateObj.getDate() : null, isImportant: importantCheck.checked }; 
+            taskDefinitions.push(newTask); saveData(); input.value = ""; importantCheck.checked = false; updateUI(); 
+        }
         function toggleTask(id) { const dateStr = getDateString(selectedDateObj); const existingIndex = completionLog.findIndex(log => log.taskId === id && log.dateStr === dateStr); if (existingIndex !== -1) completionLog.splice(existingIndex, 1); else completionLog.push({ taskId: id, dateStr: dateStr }); saveData(); updateUI(); }
         function toggleImportance(id) { const task = taskDefinitions.find(t => t.id === id); if (task) { task.isImportant = !task.isImportant; saveData(); updateUI(); } }
         function deleteTask(id) { if(confirm("削除しますか？")) { taskDefinitions = taskDefinitions.filter(t => t.id !== id); completionLog = completionLog.filter(log => log.taskId !== id); saveData(); updateUI(); } }
         function handleDiaryInput() { const text = document.getElementById('journalInput').value; const dateStr = getDateString(selectedDateObj); diaryEntries[dateStr] = text; saveData(); updateSearchCount(); }
 
-        /* --- Swipe Logic (Dual Handlers) --- */
         const swipeArea = document.getElementById('swipeArea');
         let touchStartX = 0; let touchEndX = 0;
         swipeArea.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
