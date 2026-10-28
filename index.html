@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GemTask - ToDo & Habit</title>
+    <title>GemTask v8 - ToDo & Habit</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     <link rel="apple-touch-icon" href="icon-512.png">
@@ -32,7 +32,7 @@
             --tag-weekly: #F6D365;
             --tag-monthly: #A0C1B8;
             --tag-google: #AECBFA;
-            --tag-todo: #90A4AE; /* 常駐タスク用の色 */
+            --tag-todo: #90A4AE;
         }
 
         *, *::before, *::after { box-sizing: border-box; }
@@ -137,6 +137,23 @@
 
         /* メインコンテンツ */
         .main-content { width: 65%; padding: 40px 50px; overflow-y: auto; position: relative; display: flex; flex-direction: column; }
+        
+        /* ★ 最上部に配置する「目立つ常駐ToDoセクション」の超強調デザイン */
+        .persistent-section {
+            background: linear-gradient(135deg, #FFF9F5 0%, #FFF0EB 100%);
+            padding: 18px 20px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            border: 2px solid #F4A261;
+            box-shadow: 0 4px 15px rgba(244, 162, 97, 0.15);
+        }
+        .persistent-title {
+            font-size: 1em; color: #D9534F; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+        }
+        .persistent-list { list-style: none; padding: 0; margin: 0; }
+        .persistent-list .todo-item { border-bottom: 1px solid rgba(244, 162, 97, 0.2); background: #ffffff; margin-bottom: 8px; border-radius: 10px; padding: 10px 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .persistent-list .todo-item:last-child { margin-bottom: 0; }
+
         .date-header { font-size: 2em; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         .progress-display { font-size: 0.5em; background-color: #F0EBE0; padding: 5px 15px; border-radius: 20px; color: var(--text-color); font-weight: normal; white-space: nowrap; }
         .divider { border-bottom: 2px dashed var(--accent-color); margin-bottom: 20px; }
@@ -165,22 +182,7 @@
         .badge-weekly { background-color: var(--tag-weekly); }
         .badge-monthly{ background-color: var(--tag-monthly); }
         .badge-google { background-color: var(--tag-google); color: #333; }
-        .badge-todo { background-color: var(--tag-todo); } /* 常駐用 */
-
-        /* ★ 常駐タスクエリア */
-        .persistent-section {
-            background-color: #F0F4F8; /* 少し違う背景色 */
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #DCE6F1;
-        }
-        .persistent-title {
-            font-size: 0.9em; color: #607D8B; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;
-        }
-        .persistent-list { list-style: none; padding: 0; margin: 0; }
-        .persistent-list .todo-item { border-bottom: 1px solid #E0E7EF; background: #fff; margin-bottom: 5px; border-radius: 8px; padding: 8px 10px; }
-        .persistent-list .todo-item:last-child { margin-bottom: 0; }
+        .badge-todo { background-color: var(--tag-todo); }
 
         .meal-section { margin-top: 20px; margin-bottom: 20px; }
         .meal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -215,17 +217,17 @@
             .day { font-size: 1em; aspect-ratio: 1; }
             .calendar-grid { gap: 4px; }
             .main-content { width: 100%; padding: 20px; box-sizing: border-box; height: auto; overflow: visible; background-color: #FFFFFF; z-index: 1; display: flex; flex-direction: column; }
-            .date-header { order: 1; font-size: 1.5em; margin-top: 10px; }
+            
+            /* スマホ表示の際、未完了ToDoを最上部に最も目立つように強制配置 */
+            .persistent-section { order: 0; display: block; margin-bottom: 20px; }
+            .date-header { order: 1; font-size: 1.5em; margin-top: 5px; }
             .divider { order: 2; }
-            
-            /* Order調整: 常駐リストをタイトルの下、入力欄の上へ */
             .section-title { order: 3; margin-bottom: 10px; }
-            .persistent-section { order: 4; }
-            .todo-list { order: 5; margin-bottom: 20px; } /* 日課リスト */
+            .todo-list { order: 4; margin-bottom: 20px; }
+            .input-group { order: 5; margin-bottom: 30px; border-top: 1px dashed #eee; padding-top: 20px; flex-direction: column; align-items: stretch;}
+            .meal-section { order: 6; }
+            .journal-section { order: 7; }
             
-            .input-group { order: 6; margin-bottom: 30px; border-top: 1px dashed #eee; padding-top: 20px; flex-direction: column; align-items: stretch;}
-            .meal-section { order: 7; }
-            .journal-section { order: 8; }
             .todo-input { width: 100%; margin-bottom: 10px; }
             .add-btn { width: 100%; margin-top: 10px; }
             .type-select, .important-label { width: 100%; box-sizing: border-box; justify-content: center; margin-bottom: 10px;}
@@ -271,6 +273,12 @@
         </aside>
 
         <main class="main-content">
+            <!-- ★ 未完了ToDoエリアをメインコンテンツの最上部に配置（アプリ起動時に一番最初に目に飛び込みます） -->
+            <div class="persistent-section" id="persistentSection" style="display:none;">
+                <div class="persistent-title">🔥 忘れてはならないToDo（未完了）</div>
+                <ul class="persistent-list" id="persistentList"></ul>
+            </div>
+
             <div class="date-header">
                 <span id="headerDateDisplay">Select a Date</span>
                 <span class="progress-display" id="progressDisplay">0%</span>
@@ -278,11 +286,6 @@
             <div class="divider"></div>
 
             <div class="section-title">🌿 タスクリスト</div>
-            
-            <div class="persistent-section" id="persistentSection" style="display:none;">
-                <div class="persistent-title">🔥 未完了のToDo</div>
-                <ul class="persistent-list" id="persistentList"></ul>
-            </div>
 
             <ul class="todo-list" id="todoList"></ul>
 
@@ -291,7 +294,8 @@
                 <div style="display:flex; gap:10px; width:100%;">
                     <select id="taskType" class="type-select" style="flex:1">
                         <option value="oneoff">📅 単発</option>
-                        <option value="todo">♾️ ToDo</option> <option value="daily">🔁 毎日</option>
+                        <option value="todo">♾️ ToDo（常駐）</option> 
+                        <option value="daily">🔁 毎日</option>
                         <option value="weekly">📅 毎週</option>
                         <option value="monthly">🌙 毎月</option>
                     </select>
@@ -402,7 +406,7 @@
             if (isYearView) { renderYearGrid(animationClass); } 
             else {
                 renderMonthGrid(animationClass);
-                renderTasks(); // ★ ここで通常タスクと常駐ToDoの両方を描画
+                renderTasks(); 
                 
                 const dateStr = getDateString(selectedDateObj);
                 document.getElementById('journalInput').value = diaryEntries[dateStr] || "";
@@ -437,8 +441,7 @@
             for (let i = 0; i < firstDay; i++) { const el = document.createElement('div'); el.className = 'day empty'; grid.appendChild(el); }
             for (let i = 1; i <= daysInMonth; i++) {
                 const el = document.createElement('div'); el.className = 'day'; el.textContent = i;
-                const tasks = getTasksForDate(i, viewMonth, viewYear); // 既存タスク取得
-                // 日付セルには「ToDo」はカウントしない（ToDoは日付に紐付かないため）
+                const tasks = getTasksForDate(i, viewMonth, viewYear); 
                 if (tasks.length > 0) {
                     const dateStr = `${viewYear}-${viewMonth}-${i}`;
                     const completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length;
@@ -508,7 +511,7 @@
         function getTasksForDate(day, month, year) { 
             const targetDateObj = new Date(year, month - 1, day); const weekday = targetDateObj.getDay(); 
             return taskDefinitions.filter(task => { 
-                if (task.type === 'todo') return false; // ★ ToDoは日付タスクに含めない
+                if (task.type === 'todo') return false; 
                 if (task.type === 'daily') return true; 
                 if (task.type === 'weekly') return task.targetWeekday === weekday; 
                 if (task.type === 'monthly') return task.targetDayOfMonth === day; 
@@ -517,10 +520,8 @@
             }); 
         }
 
-        // ★ 常駐ToDoを取得する関数
         function getPersistentTodos() {
             return taskDefinitions.filter(task => {
-                // typeがtodoで、かつ完了ログが「一つも」存在しないもの
                 if (task.type !== 'todo') return false;
                 const isDone = completionLog.some(log => log.taskId === task.id);
                 return !isDone;
@@ -538,7 +539,7 @@
             const day = selectedDateObj.getDate(); 
             const dateStr = getDateString(selectedDateObj); 
             
-            // --- 1. 常駐ToDoの描画 ---
+            // --- 1. 常駐ToDoの描画（最上部へ） ---
             const todos = getPersistentTodos();
             if (todos.length > 0) {
                 persistentSection.style.display = 'block';
@@ -559,17 +560,12 @@
             // --- 2. 今日のタスクの描画 ---
             const tasks = getTasksForDate(day, viewMonth, viewYear);
             let completedCount = 0;
-            
-            // 完了済みのToDoも今日のリストに表示してあげる（達成感のため）
             const doneTodosToday = taskDefinitions.filter(t => t.type === 'todo' && completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr));
-            
-            // 表示用リスト結合
             const displayTasks = [...tasks, ...doneTodosToday];
 
             if (tasks.length === 0 && doneTodosToday.length === 0) { 
                 progressDisplay.textContent = "No Tasks"; progressDisplay.style.backgroundColor = "#F0EBE0"; progressDisplay.style.color = "#aaa"; 
             } else { 
-                // 進捗計算は「今日の予定タスク」のみを対象とする（ToDoはボーナス扱い）
                 if (tasks.length > 0) {
                     completedCount = tasks.filter(t => completionLog.some(log => log.taskId === t.id && log.dateStr === dateStr)).length;
                     const percentage = Math.round((completedCount / tasks.length) * 100);
@@ -590,7 +586,7 @@
                 else if (task.type === 'weekly') { badgeHtml = "badge-weekly"; badgeText = "毎週"; } 
                 else if (task.type === 'monthly') { badgeHtml = "badge-monthly"; badgeText = "毎月"; } 
                 else if (task.type === 'google') { badgeHtml = "badge-google"; badgeText = "Google"; } 
-                else if (task.type === 'todo') { badgeHtml = "badge-todo"; badgeText = "ToDo"; } // 完了済みToDo
+                else if (task.type === 'todo') { badgeHtml = "badge-todo"; badgeText = "ToDo"; } 
                 else { badgeHtml = "badge-oneoff"; badgeText = "単発"; } 
                 
                 const starClass = task.isImportant ? 'active' : 'inactive'; const starIcon = task.isImportant ? '★' : '☆'; 
